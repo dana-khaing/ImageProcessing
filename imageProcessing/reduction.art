@@ -52,6 +52,8 @@
 -flip --- flip(_X),_sig -> __plugin("flip",_X),_sig
 -brightness --- brightness(_X),_sig -> __plugin("brightness",_X),_sig
 
+
+
 (*  CFG rules *)
 seq ::= statement^^ | statement seq 
 statement ::= assign^^ | while^^ | if^^ | plugin^^ ';'^ | load^^ ';'^ | invert^^ ';'^
@@ -67,21 +69,29 @@ brightness ::= 'brightness'^ __real64
 
 expressions ::= expression | expression ','^ expressions^
 expression ::= rels^^
-rels ::= adds^^ | gt^^ | ne^^ 
+rels ::= adds^^ | gt^^ | ne^^ | eq^^ | lt^^
   gt ::= adds '>'^ adds
+  lt ::= adds '<'^ adds
   ne ::= adds '!='^ adds 
+  eq ::= adds '='^ adds
 adds  ::= operand^^ | sub^^ | add^^
   add ::= adds '+'^ operand
   sub ::= adds '-'^ operand
+
 operand ::= __int32^^ | deref^^ | __string^^ | plugin^^ | __real64^^
 __int32 ::= &INTEGER
 deref   ::= &ID
 __string::= &STRING_SQ
 __real64 ::= &REAL
 
-(* GCD examples *)
+
+
+
+
+(*Operation Test*)
 //!try seq(assign(a,6), seq(assign(b,9), while(ne(deref(a), deref(b)), if(gt(deref(a), deref(b)), assign(a, sub(deref(a), deref(b))), assign(b, sub(deref(b), deref(a))))))), __map
-//!try "a := 6; b := 9; while a != b do if a > b then a := a - b; else b := b - a;"
+!try "a := 6; b := 9; while a != b do if a > b then a := a - b; else b := b - a;"
+//!try "a := 6; b := 6; if a = b then a := a + b; else b := b - a;"
 
 (* Plugin test *)
 //!try "plugin('init');"
@@ -92,5 +102,5 @@ __real64 ::= &REAL
 //!try "plugin('init'); load 'mountain.jpg'; invert;"
 
 (*Brightness*)
-!try "plugin('init'); plugin('load', 'GERTank.PNG'); plugin('brightness',0.4);"
+//!try "plugin('init'); plugin('load', 'GERTank.PNG'); plugin('brightness',0.4);"
 //!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('brightness',4.0);"
