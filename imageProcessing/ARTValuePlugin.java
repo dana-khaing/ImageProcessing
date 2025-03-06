@@ -104,7 +104,23 @@ public class ARTValuePlugin extends AbstractValuePlugin {
       }
       break;
 
-      
+
+      case "grayscale":
+      PixelReader grayscaleReader = inputImage.getPixelReader();
+      PixelWriter grayscaleWriter = outputImage.getPixelWriter();
+
+      for (int y = 0; y < inputImage.getHeight(); y++) {
+          for (int x = 0; x < inputImage.getWidth(); x++) {
+              Color color = grayscaleReader.getColor(x, y);
+              double red = color.getRed();
+              double green = color.getGreen();
+              double blue = color.getBlue();
+              double gray = 0.2989 * red + 0.5870 * green + 0.1140 * blue;
+              grayscaleWriter.setColor(x, y, new Color(gray, gray, gray, color.getOpacity()));
+          }
+      }
+      break;
+
     default:
       Util.fatal("Unknown plugin operation: " + args[0]);
     }

@@ -67,12 +67,13 @@
 -flip --- flip(_X),_sig -> __plugin("flip",_X),_sig
 -brightness --- brightness(_X),_sig -> __plugin("brightness",_X),_sig
 -contrast --- contrast(_X),_sig -> __plugin("contrast",_X),_sig
+-grayscale --- grayscale,_sig -> __plugin("grayscale"),_sig
 
 
 (*  CFG rules *)
 
 seq ::= statement^^ | statement seq 
-statement ::= assign^^ | while^^ | if^^ | plugin^^ ';'^ | load^^ ';'^ | invert^^ ';'^ | brightness^^ ';'^ | contrast^^ ';'^
+statement ::= assign^^ | while^^ | if^^ | plugin^^ ';'^ | load^^ ';'^ | invert^^ ';'^ | brightness^^ ';'^ | contrast^^ ';'^ | grayscale^^ ';'^
 assign ::= &ID ':='^ expression ';'^
 while ::= 'while'^ expression 'do'^ statement
 if ::= 'if'^ expression 'then'^ statement | 'if'^ expression 'then'^ statement 'else'^ statement
@@ -83,6 +84,7 @@ invert ::= 'invert'^
 flip ::= 'flip'^ __string
 brightness ::= 'brightness'^ __real64
 contrast ::= 'contrast'^ __real64
+grayscale ::= 'grayscale'^
 
 expressions ::= expression | expression ','^ expressions^
 expression ::= rels^^
@@ -136,4 +138,8 @@ __real64 ::= &REAL
 
 (* Contrast *)
 //!try "plugin('init'); plugin('load', 'GERTank.PNG'); plugin('contrast',2.0);"
-!try "plugin('init'); load 'mountain.jpg'; contrast 5.0;"
+//!try "plugin('init'); load 'mountain.jpg'; contrast 5.0;"
+
+(* Grayscale *)
+//!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('grayscale');"
+!try "plugin('init'); load 'mountain.jpg'; grayscale;"
