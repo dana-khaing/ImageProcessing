@@ -64,16 +64,16 @@
 
 -load   --- load(_X),_sig -> __plugin("load", _X),_sig
 -invert --- invert,_sig -> __plugin("invert"),_sig
--flip --- flip(_X),_sig -> __plugin("flip",_X),_sig
 -brightness --- brightness(_X),_sig -> __plugin("brightness",_X),_sig
 -contrast --- contrast(_X),_sig -> __plugin("contrast",_X),_sig
 -grayscale --- grayscale,_sig -> __plugin("grayscale"),_sig
-
+-sobel --- sobel,_sig -> __plugin("sobel"),_sig
 
 (*  CFG rules *)
 
-seq ::= statement^^ | statement seq 
-statement ::= assign^^ | while^^ | if^^ | plugin^^ ';'^ | load^^ ';'^ | invert^^ ';'^ | brightness^^ ';'^ | contrast^^ ';'^ | grayscale^^ ';'^
+seq ::= statement^^ | statement seq
+statement ::= assign^^ | while^^ | if^^ | plugin^^ ';'^ | load^^ ';'^ | invert^^ ';'^ | brightness^^ ';'^ | contrast^^ ';'^ | grayscale^^ ';'^ | sobel^^ ';'^ | 'print'^ '('printElement^')'^ ';'
+printElement ::= __string | __string '.'^ printElement^ |  e0 | e0'.'^ printElement^
 assign ::= &ID ':='^ expression ';'^
 while ::= 'while'^ expression 'do'^ statement
 if ::= 'if'^ expression 'then'^ statement | 'if'^ expression 'then'^ statement 'else'^ statement
@@ -81,10 +81,10 @@ if ::= 'if'^ expression 'then'^ statement | 'if'^ expression 'then'^ statement '
 plugin ::= 'plugin'^ '('^ expressions^ ')'^  
 load ::= 'load'^ __string
 invert ::= 'invert'^
-flip ::= 'flip'^ __string
 brightness ::= 'brightness'^ __real64
 contrast ::= 'contrast'^ __real64
 grayscale ::= 'grayscale'^
+sobel ::= 'sobel'^
 
 expressions ::= expression | expression ','^ expressions^
 expression ::= rels^^
@@ -92,30 +92,56 @@ rels ::= adds^^ | gt^^ | ne^^ | eq^^ | lt^^ | ge^^ | le^^
   gt ::= adds '>'^ adds
   lt ::= adds '<'^ adds
   ne ::= adds '!='^ adds 
-  eq ::= adds '='^ adds
+  eq ::= adds '=='^ adds
   ge ::= adds '>='^ adds
   le ::= adds '<='^ adds
-adds  ::= operand^^ | sub^^ | add^^ | mul^^ | div^^
-  add ::= adds '+'^ operand
-  sub ::= adds '-'^ operand
-  mul ::= adds '*'^ operand
-  div ::= adds '/'^ operand
-operand ::= __int32^^ | deref^^ | __string^^ | plugin^^ | __real64^^
+
+e0 ::= e1^^ |
+        e1 '>'^^ e1 |
+        e1 '<'^^ e1 |
+        e1 '>='^^ e1 |
+        e1 '<='^^ e1 |
+        e1 '=='^^ e1 |
+        e1 '!='^^ e1 
+
+e1 ::= e2^^ |
+        e1 '+'^^ e2 |
+        e1 '-'^^ e2
+
+e2 ::= e3^^ |
+        e2 '*'^^ e3|
+        e2 '/'^^ e3|
+        e2 '%'^^ e3
+
+e3 ::= e4^^ |
+        '+'^^ e3 |
+        '-'^^ e3
+
+e4 ::= e5^^|
+        e5'**'^^ e4
+
+e5 ::= __int32 |
+        '(' e1^^ ')'
+
+e5 ::= __real64 |
+        '(' e1^^ ')'
+
 __int32 ::= &INTEGER
 deref   ::= &ID
 __string::= &STRING_SQ
 __real64 ::= &REAL
 
 
-
-
-
+!try "print(3+3*8);"
 
 (*Operation Test*)
 //!try seq(assign(a,6), seq(assign(b,9), while(ne(deref(a), deref(b)), if(gt(deref(a), deref(b)), assign(a, sub(deref(a), deref(b))), assign(b, sub(deref(b), deref(a))))))), __map
 //!try "a := 6; b := 9; while a != b do if a > b then a := a - b; else b := b - a;"
 //!try "a := 6; b := 6; if a = b then a := a + b; else b := b - a;"
 //!try "a := 6; b := 6; if a = b then a := a * b; else b := b - a;"
+
+(* Equal *)
+//!try eq(3,3),__map = true,{=}
 
 (* Plugin Testing *)
 
@@ -142,4 +168,8 @@ __real64 ::= &REAL
 
 (* Grayscale *)
 //!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('grayscale');"
-!try "plugin('init'); load 'mountain.jpg'; grayscale;"
+//!try "plugin('init'); load 'mountain.jpg'; grayscale;"
+
+(* Sobel *)
+//!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('sobel');"
+//!try "plugin('init'); load 'mountain.jpg'; sobel;"

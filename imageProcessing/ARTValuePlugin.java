@@ -1,11 +1,3 @@
-/*
- * Example image processing plugin
- *
- * Ideas for image processing operations:
- *
- * see https://en.wikipedia.org/wMedian_filter and https://en.wikipedia.org/wiki/Sobel_operator and follow links
-*/
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -121,6 +113,47 @@ public class ARTValuePlugin extends AbstractValuePlugin {
       }
       break;
 
+      case "sobel":
+      PixelReader sobelReader = inputImage.getPixelReader();
+      PixelWriter sobelWriter = outputImage.getPixelWriter();
+
+      double[][] sobelX = { { -1, 0, 1 }, { -2, 0, 2 }, { -1, 0, 1 } };
+      double[][] sobelY = { { -1, -2, -1 }, { 0, 0, 0 }, { 1, 2, 1 } };
+
+      for (int y = 0; y < inputImage.getHeight(); y++) {
+          for (int x = 0; x < inputImage.getWidth(); x++) {
+              double redX = 0.0;
+              double greenX = 0.0;
+              double blueX = 0.0;
+              double redY = 0.0;
+              double greenY = 0.0;
+              double blueY = 0.0;
+
+              for (int dy = -1; dy <= 1; dy++) {
+                  for (int dx = -1; dx <= 1; dx++) {
+                      int nx = x + dx;
+                      int ny = y + dy;
+
+                      if (nx >= 0 && nx < inputImage.getWidth() && ny >= 0 && ny < inputImage.getHeight()) {
+                          Color color = sobelReader.getColor(nx, ny);
+                          redX += color.getRed() * sobelX[dy + 1][dx + 1];
+                          greenX += color.getGreen() * sobelX[dy + 1][dx + 1];
+                          blueX += color.getBlue() * sobelX[dy + 1][dx + 1];
+                          redY += color.getRed() * sobelY[dy + 1][dx + 1];
+                          greenY += color.getGreen() * sobelY[dy + 1][dx + 1];
+                          blueY += color.getBlue() * sobelY[dy + 1][dx + 1];
+                      }
+                  }
+              }
+
+              double red = Math.min(Math.sqrt(redX * redX + redY * redY), 1.0);
+              double green = Math.min(Math.sqrt(greenX * greenX + greenY * greenY), 1.0);
+              double blue = Math.min(Math.sqrt(blueX * blueX + blueY * blueY), 1.0);
+
+              sobelWriter.setColor(x, y, new Color(red, green, blue, 1.0));
+          }
+      }
+      break;
     default:
       Util.fatal("Unknown plugin operation: " + args[0]);
     }
