@@ -66,21 +66,23 @@
 -invert --- invert,_sig -> __plugin("invert"),_sig
 -flip --- flip(_X),_sig -> __plugin("flip",_X),_sig
 -brightness --- brightness(_X),_sig -> __plugin("brightness",_X),_sig
-
+-contrast --- contrast(_X),_sig -> __plugin("contrast",_X),_sig
 
 
 (*  CFG rules *)
+
 seq ::= statement^^ | statement seq 
-statement ::= assign^^ | while^^ | if^^ | plugin^^ ';'^ | load^^ ';'^ | invert^^ ';'^ | brightness^^ ';'^
+statement ::= assign^^ | while^^ | if^^ | plugin^^ ';'^ | load^^ ';'^ | invert^^ ';'^ | brightness^^ ';'^ | contrast^^ ';'^
 assign ::= &ID ':='^ expression ';'^
 while ::= 'while'^ expression 'do'^ statement
 if ::= 'if'^ expression 'then'^ statement | 'if'^ expression 'then'^ statement 'else'^ statement
-plugin ::= 'plugin'^ '('^ expressions^ ')'^  
 
+plugin ::= 'plugin'^ '('^ expressions^ ')'^  
 load ::= 'load'^ __string
 invert ::= 'invert'^
 flip ::= 'flip'^ __string
 brightness ::= 'brightness'^ __real64
+contrast ::= 'contrast'^ __real64
 
 expressions ::= expression | expression ','^ expressions^
 expression ::= rels^^
@@ -106,12 +108,14 @@ __real64 ::= &REAL
 
 
 
+
 (*Operation Test*)
 //!try seq(assign(a,6), seq(assign(b,9), while(ne(deref(a), deref(b)), if(gt(deref(a), deref(b)), assign(a, sub(deref(a), deref(b))), assign(b, sub(deref(b), deref(a))))))), __map
 //!try "a := 6; b := 9; while a != b do if a > b then a := a - b; else b := b - a;"
 //!try "a := 6; b := 6; if a = b then a := a + b; else b := b - a;"
 //!try "a := 6; b := 6; if a = b then a := a * b; else b := b - a;"
-!try 123 * 12
+
+(* Plugin Testing *)
 
 (* Loading input *)
 //!try "plugin('init');"
@@ -127,4 +131,9 @@ __real64 ::= &REAL
 //!try "plugin('init'); load 'mountain.jpg'; brightness 0.4;"
 //!try "plugin('init'); load 'mountain.jpg'; brightness 5.0;"
 
+(* Flip *)
 //!try "plugin('init'); plugin('load', 'GERTank.PNG'); plugin('flip','vertical');"
+
+(* Contrast *)
+//!try "plugin('init'); plugin('load', 'GERTank.PNG'); plugin('contrast',2.0);"
+!try "plugin('init'); load 'mountain.jpg'; contrast 5.0;"

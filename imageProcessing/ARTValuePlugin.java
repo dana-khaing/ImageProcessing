@@ -86,6 +86,25 @@ public class ARTValuePlugin extends AbstractValuePlugin {
         }
       break;
     
+      case "contrast":
+      double contrast = (double) args[1];
+      PixelReader contrastReader = inputImage.getPixelReader();
+      PixelWriter contrastWriter = outputImage.getPixelWriter();
+  
+      for (int y = 0; y < inputImage.getHeight(); y++) {
+          for (int x = 0; x < inputImage.getWidth(); x++) {
+              Color color = contrastReader.getColor(x, y);
+  
+              double red = Math.max(0.0, Math.min((color.getRed() - 0.5) * contrast + 0.5, 1.0));
+              double green = Math.max(0.0, Math.min((color.getGreen() - 0.5) * contrast + 0.5, 1.0));
+              double blue = Math.max(0.0, Math.min((color.getBlue() - 0.5) * contrast + 0.5, 1.0));
+  
+              contrastWriter.setColor(x, y, new Color(red, green, blue, color.getOpacity()));
+          }
+      }
+      break;
+
+      
     default:
       Util.fatal("Unknown plugin operation: " + args[0]);
     }
