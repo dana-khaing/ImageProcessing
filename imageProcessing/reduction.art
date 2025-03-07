@@ -6,16 +6,24 @@
 -assign  _n |> __int32(_)    --- assign(_X,_n),_sig -> __done,__put(_sig,_X,_n)
 -assignR _E,_sig -> _I,_sigP --- assign(_X,_E),_sig -> assign(_X,_I),_sigP
 
--deref --- deref(_R),_sig -> __get(_sig,_R),_sig
-
 -sequenceDone                    --- seq(__done, _C),_sig -> _C,_sig
 -sequence _C1,_sig -> _C1P,_sigP --- seq(_C1,_C2),_sig -> seq(_C1P,_C2),_sigP
+
+-ifTrue                        --- if(true,_C1),_sig -> _C1,_sig
+-ifFalse                       --- if(false,_C1),_sig -> _C2,_sig
+-ifResolve _E,_sig ->_EP,_sigP --- if(_E,_C1),_sig -> if(_EP,_C1),_sigP
 
 -ifTrue                        --- if(true,_C1,_C2),_sig -> _C1,_sig
 -ifFalse                       --- if(false,_C1,_C2),_sig -> _C2,_sig
 -ifResolve _E,_sig ->_EP,_sigP --- if(_E,_C1,_C2),_sig -> if(_EP,_C1,_C2),_sigP
 
 -while --- while(_E,_C),_sig -> if(_E,seq(_C,while(_E,_C)),__done),_sig
+
+-for --- for(_A,_B,_I,_D), _sig -> seq(_A, while(_B, seq(_D, _I))), _sig
+
+-deref --- deref(_R),_sig -> __get(_sig,_R),_sig
+
+-neg   --- neg(_X),_sig -> __neg(_X),_sig
 
 -eq  _n1 |> __int32(_) _n2 |> __int32(_)      --- eq(_n1,_n2),_sig  -> __eq(_n1,_n2),_sig
 -eqR _n |> __int32(_)  _E2,_sig -> _I2,_sigP  --- eq(_n,_E2) ,_sig  -> eq(_n,_I2),_sigP
@@ -57,6 +65,119 @@
 -divR _n |> __int32(_) _E2,_sig -> _I2,_sigP  --- div(_n,_E2),_sig  -> div(_n,_I2),_sigP
 -divL _E1,_sig -> _I1,_sigP                   --- div(_E1,_E2),_sig -> div(_I1,_E2),_sigP
 
+-mod  _n1 |> __int32(_) _n2 |> __int32(_)     --- mod(_n1,_n2),_sig -> __mod(_n1,_n2),_sig
+-modR _n |> __int32(_) _E2,_sig -> _I2,_sigP  --- mod(_n,_E2),_sig  -> mod(_n,_I2),_sigP
+-modL _E1,_sig -> _I1,_sigP                   --- mod(_E1,_E2),_sig -> mod(_I1,_E2),_sigP
+
+-exp  _n1 |> __int32(_) _n2 |> __int32(_)     --- exp(_n1,_n2),_sig -> __exp(_n1,_n2),_sig
+-expR _n |> __int32(_) _E2,_sig -> _I2,_sigP  --- exp(_n,_E2),_sig  -> exp(_n,_I2),_sigP
+-expL _E1,_sig -> _I1,_sigP                   --- exp(_E1,_E2),_sig -> exp(_I1,_E2),_sigP
+
+(* postIncrement *)
+deref(_ID), _sig -> _V, _sig  _V |> __int32(_)      assign(_ID, __add(_V, 1)), _sig -> _, _sigP
+---
+postinc(_ID), _sig -> _V, _sigP
+
+(* postDecrement *)
+deref(_X), _sig -> _V, _sig  _V |> __int32(_)      assign(_X, __sub(_V, 1)), _sig -> _, _sigP
+---
+postdec(_X), _sig -> _V, _sigP
+
+(* preIncrement *)
+deref(_ID), _sig -> _V, _sig  _V |> __int32(_)      assign(_ID, __add(_V, 1)), _sig -> _, _sigP
+---
+preinc(_ID), _sig -> deref(_ID), _sigP
+
+(* preDecrement *)
+deref(_ID), _sig -> _V, _sig  _V |> __int32(_)      assign(_ID, __sub(_V, 1)), _sig -> _, _sigP
+---
+predec(_ID), _sig -> deref(_ID), _sigP
+
+-eq  _n1 |> __real64(_) _n2 |> __real64(_)      --- eq(_n1,_n2),_sig  -> __eq(_n1,_n2),_sig
+-eqR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- eq(_n,_E2) ,_sig  -> eq(_n,_I2),_sigP
+-eqL _E1,_sig -> _I1,_sigP                    --- eq(_E1,_E2),_sig  -> eq(_I1,_E2),_sigP
+
+-ne  _n1 |> __real64(_) _n2 |> __real64(_)      --- ne(_n1,_n2),_sig  -> __ne(_n1,_n2),_sig
+-neR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- ne(_n,_E2) ,_sig  -> ne(_n,_I2),_sigP
+-neL _E1,_sig -> _I1,_sigP                    --- ne(_E1,_E2),_sig  -> ne(_I1,_E2),_sigP
+
+-gt  _n1 |> __real64(_)  _n2 |> __real64(_)     --- gt(_n1,_n2),_sig  ->  __gt(_n1,_n2),_sig 
+-gtR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- gt(_n,_E2),_sig   -> gt(_n,_I2),_sigP
+-gtL _E1,_sig -> _I1,_sigP                    --- gt(_E1,_E2),_sig  -> gt(_I1,_E2),_sigP
+
+-lt  _n1 |> __real64(_)  _n2 |> __real64(_)     --- lt(_n1,_n2),_sig  ->  __lt(_n1,_n2),_sig 
+-ltR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- lt(_n,_E2),_sig   -> lt(_n,_I2),_sigP
+-ltL _E1,_sig -> _I1,_sigP                    --- lt(_E1,_E2),_sig  -> lt(_I1,_E2),_sigP
+
+-ge  _n1 |> __real64(_)  _n2 |> __real64(_)     --- ge(_n1,_n2),_sig  ->  __ge(_n1,_n2),_sig 
+-geR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- ge(_n,_E2),_sig   -> ge(_n,_I2),_sigP
+-geL _E1,_sig -> _I1,_sigP                    --- ge(_E1,_E2),_sig  -> ge(_I1,_E2),_sigP
+
+-le  _n1 |> __real64(_)  _n2 |> __real64(_)     --- le(_n1,_n2),_sig  ->  __le(_n1,_n2),_sig 
+-leR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- le(_n,_E2),_sig   -> le(_n,_I2),_sigP
+-leL _E1,_sig -> _I1,_sigP                    --- le(_E1,_E2),_sig  -> le(_I1,_E2),_sigP
+
+-add  _n1 |> __real64(_) _n2 |> __real64(_)     --- add(_n1,_n2),_sig -> __add(_n1,_n2),_sig
+-addR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- add(_n,_E2),_sig  -> add(_n,_I2),_sigP
+-addL _E1,_sig -> _I1,_sigP                   --- add(_E1,_E2),_sig -> add(_I1,_E2),_sigP
+
+-sub  _n1 |> __real64(_) _n2 |> __real64(_)     --- sub(_n1,_n2),_sig -> __sub(_n1,_n2),_sig
+-subR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- sub(_n,_E2),_sig  -> sub(_n,_I2),_sigP
+-subL _E1,_sig -> _I1,_sigP                   --- sub(_E1,_E2),_sig -> sub(_I1,_E2),_sigP
+
+-mul  _n1 |> __real64(_) _n2 |> __real64(_)     --- mul(_n1,_n2),_sig -> __mul(_n1,_n2),_sig
+-mulR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- mul(_n,_E2),_sig  -> mul(_n,_I2),_sigP
+-mulL _E1,_sig -> _I1,_sigP                   --- mul(_E1,_E2),_sig -> mul(_I1,_E2),_sigP
+
+-div  _n1 |> __real64(_) _n2 |> __real64(_)     --- div(_n1,_n2),_sig -> __div(_n1,_n2),_sig
+-divR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- div(_n,_E2),_sig  -> div(_n,_I2),_sigP
+-divL _E1,_sig -> _I1,_sigP                   --- div(_E1,_E2),_sig -> div(_I1,_E2),_sigP
+
+-mod  _n1 |> __real64(_) _n2 |> __real64(_)     --- mod(_n1,_n2),_sig -> __mod(_n1,_n2),_sig
+-modR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- mod(_n,_E2),_sig  -> mod(_n,_I2),_sigP
+-modL _E1,_sig -> _I1,_sigP                   --- mod(_E1,_E2),_sig -> mod(_I1,_E2),_sigP
+
+-exp  _n1 |> __real64(_) _n2 |> __real64(_)     --- exp(_n1,_n2),_sig -> __exp(_n1,_n2),_sig
+-expR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- exp(_n,_E2),_sig  -> exp(_n,_I2),_sigP
+-expL _E1,_sig -> _I1,_sigP                   --- exp(_E1,_E2),_sig -> exp(_I1,_E2),_sigP
+
+(* Logical Operators *)
+
+-and  _n1 |> __bool(_) _n2 |> __bool(_)     --- and(_n1,_n2),_sig -> __and(_n1,_n2),_sig
+-andR _n |> __bool(_) _E2,_sig -> _I2,_sigP --- and(_n,_E2),_sig  -> and(_n,_I2),_sigP
+-andL _E1,_sig -> _I1,_sigP                  --- and(_E1,_E2),_sig -> and(_I1,_E2),_sigP
+
+-or  _n1 |> __bool(_) _n2 |> __bool(_)     --- or(_n1,_n2),_sig -> __or(_n1,_n2),_sig
+-orR _n |> __bool(_) _E2,_sig -> _I2,_sigP --- or(_n,_E2),_sig  -> or(_n,_I2),_sigP
+-orL _E1,_sig -> _I1,_sigP                  --- or(_E1,_E2),_sig -> or(_I1,_E2),_sigP
+
+-xor  _n1 |> __bool(_) _n2 |> __bool(_)     --- xor(_n1,_n2),_sig -> __xor(_n1,_n2),_sig
+-xorR _n |> __bool(_) _E2,_sig -> _I2,_sigP --- xor(_n,_E2),_sig  -> xor(_n,_I2),_sigP
+-xorL _E1,_sig -> _I1,_sigP                  --- xor(_E1,_E2),_sig -> xor(_I1,_E2),_sigP
+
+-not _X,_sig -> _XP,_sigP--- not(_X),_sig -> __not(_XP),_sigP
+
+(* postIncrement *)
+deref(_ID), _sig -> _V, _sig  _V |> __real64(_)      assign(_ID, __add(_V, 1)), _sig -> _, _sigP
+---
+postinc(_ID), _sig -> _V, _sigP
+
+(* postDecrement *)
+deref(_X), _sig -> _V, _sig  _V |> __real64(_)      assign(_X, __sub(_V, 1)), _sig -> _, _sigP
+---
+postdec(_X), _sig -> _V, _sigP
+
+(* preIncrement *)
+deref(_ID), _sig -> _V, _sig  _V |> __real64(_)      assign(_ID, __add(_V, 1)), _sig -> _, _sigP
+---
+preinc(_ID), _sig -> deref(_ID), _sigP
+
+(* preDecrement *)
+deref(_ID), _sig -> _V, _sig  _V |> __real64(_)      assign(_ID, __sub(_V, 1)), _sig -> _, _sigP
+---
+predec(_ID), _sig -> deref(_ID), _sigP
+
+
 -plugin --- plugin(_O),_sig -> __plugin(_O),_sig
 -plugin --- plugin(_O, _X),_sig -> __plugin(_O, _X),_sig
 -plugin --- plugin(_O, _X, _Y),_sig -> __plugin(_O, _X, _Y),_sig
@@ -72,12 +193,46 @@
 (*  CFG rules *)
 
 seq ::= statement^^ | statement seq
-statement ::= assign^^ | while^^ | if^^ | plugin^^ ';'^ | load^^ ';'^ | invert^^ ';'^ | brightness^^ ';'^ | contrast^^ ';'^ | grayscale^^ ';'^ | sobel^^ ';'^ | 'print'^ '('printElement^')'^ ';'
-printElement ::= __string | __string '.'^ printElement^ |  e0 | e0'.'^ printElement^
+statement ::= assign^^ | while^^ |for^^ | if^^ | plugin^^ ';'^ | load^^ ';'^ | invert^^ ';'^ | brightness^^ ';'^ | contrast^^ ';'^ | grayscale^^ ';'^ | sobel^^ ';'^
 assign ::= &ID ':='^ expression ';'^
-while ::= 'while'^ expression 'do'^ statement
+while ::= 'while'^ expression 'do'^ seq
+for ::= 'for'^ assign expression ';'^ statement 'do'^ seq
 if ::= 'if'^ expression 'then'^ statement | 'if'^ expression 'then'^ statement 'else'^ statement
-
+expressions ::= expression | expression ','^ expressions^
+expression ::= rels^^
+rels ::= e0^^ | and^^ | or^^
+  and ::= e0 '&&'^ e0
+  or ::= e0 '||'^ e0
+e0 ::= e1^^ | gt^^ | ge^^ | lt^^ | le^^ | ne^^ | eq^^
+  gt ::= e1 '>'^ e1
+  ge ::= e1 '>='^ e1
+  lt ::= e1 '<'^ e1
+  le ::= e1 '<='^ e1
+  ne ::= e1 '!='^ e1 
+  eq ::= e1 '=='^ e1
+e1  ::= e2^^ | sub^^ | add^^
+  add ::= e1 '+'^ e2
+  sub ::= e1 '-'^ e2
+e2  ::= e3^^ | mul^^ | div^^ | mod^^
+  mul ::= e2 '*'^ e3
+  div ::= e2 '/'^ e3
+  mod ::= e2 '%'^ e3
+e3 ::= e4^^ | neg^^
+  neg ::= '-'^ e4
+e4  ::= e5^^ | exp^^
+  exp ::= e5 '**'^ e4
+e5  ::= e6^^ | postinc^^ | postdec^^
+  postinc ::= &ID '++'^
+  postdec ::= &ID '--'^
+e6 ::= operand^^ | preinc^^ | predec^^
+  preinc ::= '++'^ &ID
+  predec ::= '--'^ &ID
+operand ::=__string^^ | plugin^^ | '('^ e1^^ ')'^ | __int32^^ | __real64^^ | deref^^ | __bool 
+__string::= &STRING_SQ
+__int32 ::= &INTEGER
+__real64 ::= &REAL
+deref   ::= &ID
+__bool ::= 'true' | 'false'
 plugin ::= 'plugin'^ '('^ expressions^ ')'^  
 load ::= 'load'^ __string
 invert ::= 'invert'^
@@ -86,65 +241,58 @@ contrast ::= 'contrast'^ __real64
 grayscale ::= 'grayscale'^
 sobel ::= 'sobel'^
 
-expressions ::= expression | expression ','^ expressions^
-expression ::= rels^^
-rels ::= adds^^ | gt^^ | ne^^ | eq^^ | lt^^ | ge^^ | le^^
-  gt ::= adds '>'^ adds
-  lt ::= adds '<'^ adds
-  ne ::= adds '!='^ adds 
-  eq ::= adds '=='^ adds
-  ge ::= adds '>='^ adds
-  le ::= adds '<='^ adds
 
-e0 ::= e1^^ |
-        e1 '>'^^ e1 |
-        e1 '<'^^ e1 |
-        e1 '>='^^ e1 |
-        e1 '<='^^ e1 |
-        e1 '=='^^ e1 |
-        e1 '!='^^ e1 
-
-e1 ::= e2^^ |
-        e1 '+'^^ e2 |
-        e1 '-'^^ e2
-
-e2 ::= e3^^ |
-        e2 '*'^^ e3|
-        e2 '/'^^ e3|
-        e2 '%'^^ e3
-
-e3 ::= e4^^ |
-        '+'^^ e3 |
-        '-'^^ e3
-
-e4 ::= e5^^|
-        e5'**'^^ e4
-
-e5 ::= __int32 |
-        '(' e1^^ ')'
-
-e5 ::= __real64 |
-        '(' e1^^ ')'
-
-__int32 ::= &INTEGER
-deref   ::= &ID
-__string::= &STRING_SQ
-__real64 ::= &REAL
-
-
-!try "print(3+3*8);"
-
-(*Operation Test*)
+(* Operation Test *)
 //!try seq(assign(a,6), seq(assign(b,9), while(ne(deref(a), deref(b)), if(gt(deref(a), deref(b)), assign(a, sub(deref(a), deref(b))), assign(b, sub(deref(b), deref(a))))))), __map
-//!try "a := 6; b := 9; while a != b do if a > b then a := a - b; else b := b - a;"
-//!try "a := 6; b := 6; if a = b then a := a + b; else b := b - a;"
-//!try "a := 6; b := 6; if a = b then a := a * b; else b := b - a;"
+//!try "a := 6; b := 6; if a > b then a := a * b; else b := b - a;"
+//!try "a := 6; b := 6; if a > b then a := a * b; else b := b - a;"
+//!try "a := 6; b := 6; if a <= b then a := a * b; else b := b - a;"
+//!try "a := 6; b := 6; if a >= b then a := a * b; else b := b - a;"
+//!try "a := 6; b := 6; if a != b then a :=  a * b ; else b := b - a;"
 
-(* Equal *)
+//!try "a := 6 ; b := 2; c := a / b;" // div
+//!try "a := 6 ; b := 2; c := a % b;" // mod
+//!try  "a := 6 ; b := 2 ; c := b ** a;" // expo
+
+(* Using GIFT operators *)
+//!try "a := 4; b := 5; c := 2 ;d := a + b * c;"
+
+(* Equality *)
 //!try eq(3,3),__map = true,{=}
+//!try eq(4,3),__map = false,{=}
+//!try ne(4,3),__map = true,{=}
+//!try ne(3,3),__map = false,{=}
+
+(* For Loop *)
+//!try for(
+//  seq(assign(a, 11), assign(b,13)),             
+//  ne(deref(a), deref(b)),                     
+//  __done,                                       
+//  if(
+//    gt(deref(a), deref(b)), 
+//    assign(a, sub(deref(a), deref(b))), 
+//    assign(b, sub(deref(b), deref(a)))
+//  )
+//), __map
+//!try "a := 3; for i := 0; i < 3; i := i + 1; do a := a + 1;"
+
+(* Logical Gate *)
+//!try and(true, true), __map
+//!try not(true), __map
+//!try or(true, false), __map
+//!try and(and(false, false), xor(false, false)), __map
+//!try not(or(false, true)), __map
+//!try "a := 3; b := 4; if a < 10 || b > 1 then a := a + b;"
+//!try "a := 3; b := 4; if a > 10 && b > 1 then a := a + b; else b := a + b;"
+
+(* postIncrement & postDecrement *)
+//!try  "a := 6; b := a ++;"
+//!try  "a := 6; b := a --;"
+(* preIncrement & preDecrement *)
+//!try  "a := 6; b := ++ a;"
+//!try  "a := 6; b := -- a;"
 
 (* Plugin Testing *)
-
 (* Loading input *)
 //!try "plugin('init');"
 //!try "plugin('init'); plugin('load', 'GERTank.PNG');"
@@ -159,12 +307,12 @@ __real64 ::= &REAL
 //!try "plugin('init'); load 'mountain.jpg'; brightness 0.4;"
 //!try "plugin('init'); load 'mountain.jpg'; brightness 5.0;"
 
-(* Flip *)
-//!try "plugin('init'); plugin('load', 'GERTank.PNG'); plugin('flip','vertical');"
-
 (* Contrast *)
 //!try "plugin('init'); plugin('load', 'GERTank.PNG'); plugin('contrast',2.0);"
 //!try "plugin('init'); load 'mountain.jpg'; contrast 5.0;"
+
+(* Continuous Test *)
+// !try "plugin('init'); load 'mountain.jpg'; contrast 5.0; brightness 2.0;"
 
 (* Grayscale *)
 //!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('grayscale');"

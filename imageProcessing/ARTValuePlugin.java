@@ -96,7 +96,6 @@ public class ARTValuePlugin extends AbstractValuePlugin {
       }
       break;
 
-
       case "grayscale":
       PixelReader grayscaleReader = inputImage.getPixelReader();
       PixelWriter grayscaleWriter = outputImage.getPixelWriter();
