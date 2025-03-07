@@ -60,7 +60,8 @@ public class ARTValuePlugin extends AbstractValuePlugin {
           pixelWriter.setColor(readX, readY, new Color(invertedPixel, invertedPixel, invertedPixel, 1));
         }
       break;
-      
+        
+        
       case "brightness":
       double factor = (double) args[1]; 
       PixelReader brightnessReader = inputImage.getPixelReader();
@@ -77,6 +78,46 @@ public class ARTValuePlugin extends AbstractValuePlugin {
           brightnessWriter.setColor(x, y, new Color(red, green, blue, color.getOpacity()));
         }
       break;
+
+      case "rotate":
+    int angle = (int) args[1];
+    PixelReader rotateReader = inputImage.getPixelReader();
+
+    WritableImage rotatedImage;
+    if (angle == 90 || angle == 270) {
+        rotatedImage = new WritableImage((int) inputImage.getHeight(), (int) inputImage.getWidth());
+    } else if (angle == 180) {
+        rotatedImage = new WritableImage((int) inputImage.getWidth(), (int) inputImage.getHeight());
+    } else {
+        Util.error("Unsupported rotation angle: " + angle);
+        return null;
+    }
+
+    PixelWriter rotateWriter = rotatedImage.getPixelWriter();
+    int width = (int) inputImage.getWidth();
+    int height = (int) inputImage.getHeight();
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            Color color = rotateReader.getColor(x, y);
+            switch (angle) {
+                case 90:
+                    rotateWriter.setColor(height - y - 1, x, color);
+                    break;
+                case 180:
+                    rotateWriter.setColor(width - x - 1, height - y - 1, color);
+                    break;
+                case 270:
+                    rotateWriter.setColor(y, width - x - 1, color);
+                    break;
+            }
+        }
+    }
+
+    outputImage = rotatedImage;
+    root.getChildren().set(1, new ImageView(outputImage));
+    break;
+
     
       case "contrast":
       double contrast = (double) args[1];
@@ -153,6 +194,70 @@ public class ARTValuePlugin extends AbstractValuePlugin {
           }
       }
       break;
+
+      case "summerVibe":
+      PixelReader summarVibeReader = inputImage.getPixelReader();
+      PixelWriter summarVibeWriter = outputImage.getPixelWriter();
+
+      for (int y = 0; y < inputImage.getHeight(); y++) {
+        for (int x = 0; x < inputImage.getWidth(); x++) {
+          Color color = summarVibeReader.getColor(x, y);
+
+          double red = Math.min(color.getRed() * 1.2, 1.0);
+          double green = Math.min(color.getGreen() * 1.1, 1.0);
+          double blue = Math.min(color.getBlue() * 0.9, 1.0);
+
+          summarVibeWriter.setColor(x, y, new Color(red, green, blue, color.getOpacity()));
+        }
+      }
+      break;
+
+
+      case "blur": {
+        int radius = (int) args[1];
+        int blurWidth = (int) inputImage.getWidth();
+        int blurHeight = (int) inputImage.getHeight();
+    
+        PixelReader blurReader = inputImage.getPixelReader();
+        WritableImage blurredImage = new WritableImage(blurWidth, blurHeight);
+        PixelWriter blurWriter = blurredImage.getPixelWriter();
+    
+        for (int y = 0; y < blurHeight; y++) {
+            for (int x = 0; x < blurWidth; x++) {
+    
+                double red = 0, green = 0, blue = 0;
+                int count = 0;
+    
+                for (int dy = -radius; dy <= radius; dy++) {
+                    for (int dx = -radius; dx <= radius; dx++) {
+                        int nx = x + dx;
+                        int ny = y + dy;
+    
+                        if (nx >= 0 && nx < blurWidth && ny >= 0 && ny < blurHeight) {
+                            Color color = blurReader.getColor(nx, ny);
+                            red += color.getRed();
+                            green += color.getGreen();
+                            blue += color.getBlue();
+                            count++;
+                        }
+                    }
+                }
+    
+                if (count > 0) {
+                    Color averagedColor = new Color(red / count, green / count, blue / count, 1.0);
+                    blurWriter.setColor(x, y, averagedColor);
+                } else {
+                    blurWriter.setColor(x, y, blurReader.getColor(x, y));
+                }
+            }
+        }
+    
+        outputImage = blurredImage;
+        root.getChildren().set(1, new ImageView(outputImage));
+        break;
+    }
+    
+    
     default:
       Util.fatal("Unknown plugin operation: " + args[0]);
     }

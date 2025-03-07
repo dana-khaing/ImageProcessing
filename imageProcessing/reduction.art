@@ -6,6 +6,12 @@
 -assign  _n |> __int32(_)    --- assign(_X,_n),_sig -> __done,__put(_sig,_X,_n)
 -assignR _E,_sig -> _I,_sigP --- assign(_X,_E),_sig -> assign(_X,_I),_sigP
 
+-assign  _n |> __real64(_)    --- assign(_X,_n),_sig -> __done,__put(_sig,_X,_n)
+-assignR _E,_sig -> _I,_sigP --- assign(_X,_E),_sig -> assign(_X,_I),_sigP
+
+-assign  _n |> __bool(_)    --- assign(_X,_n),_sig -> __done,__put(_sig,_X,_n)
+-assignR _E,_sig -> _I,_sigP --- assign(_X,_E),_sig -> assign(_X,_I),_sigP
+
 -sequenceDone                    --- seq(__done, _C),_sig -> _C,_sig
 -sequence _C1,_sig -> _C1P,_sigP --- seq(_C1,_C2),_sig -> seq(_C1P,_C2),_sigP
 
@@ -187,13 +193,16 @@ predec(_ID), _sig -> deref(_ID), _sigP
 -invert --- invert,_sig -> __plugin("invert"),_sig
 -brightness --- brightness(_X),_sig -> __plugin("brightness",_X),_sig
 -contrast --- contrast(_X),_sig -> __plugin("contrast",_X),_sig
+-rotate --- rotate(_X),_sig -> __plugin("rotate",_X),_sig
 -grayscale --- grayscale,_sig -> __plugin("grayscale"),_sig
 -sobel --- sobel,_sig -> __plugin("sobel"),_sig
+-summerVibe --- summerVibe,_sig -> __plugin("summerVibe"),_sig
+-blur --- blur(_X),_sig -> __plugin("blur",_X),_sig
 
 (*  CFG rules *)
 
 seq ::= statement^^ | statement seq
-statement ::= assign^^ | while^^ |for^^ | if^^ | plugin^^ ';'^ | load^^ ';'^ | invert^^ ';'^ | brightness^^ ';'^ | contrast^^ ';'^ | grayscale^^ ';'^ | sobel^^ ';'^
+statement ::= assign^^ | while^^ |for^^ | if^^ | plugin^^ ';'^ | load^^ ';'^ | invert^^ ';'^ | brightness^^ ';'^ | contrast^^ ';'^ | rotate^^ ';'^ | grayscale^^ ';'^ | sobel^^ ';'^ | summerVibe^^ ';'^ | blur^^ ';'^
 assign ::= &ID ':='^ expression ';'^
 while ::= 'while'^ expression 'do'^ seq
 for ::= 'for'^ assign expression ';'^ statement 'do'^ seq
@@ -227,7 +236,7 @@ e5  ::= e6^^ | postinc^^ | postdec^^
 e6 ::= operand^^ | preinc^^ | predec^^
   preinc ::= '++'^ &ID
   predec ::= '--'^ &ID
-operand ::=__string^^ | plugin^^ | '('^ e1^^ ')'^ | __int32^^ | __real64^^ | deref^^ | __bool 
+operand ::=__string^^ | plugin^^ | '('^ e1^^ ')'^ | __int32^^ | __real64^^ | deref^^ | __bool^^
 __string::= &STRING_SQ
 __int32 ::= &INTEGER
 __real64 ::= &REAL
@@ -238,8 +247,11 @@ load ::= 'load'^ __string
 invert ::= 'invert'^
 brightness ::= 'brightness'^ __real64
 contrast ::= 'contrast'^ __real64
+rotate ::= 'rotate'^ __int32
 grayscale ::= 'grayscale'^
 sobel ::= 'sobel'^
+summerVibe ::= 'summerVibe'^
+blur ::= 'blur'^ __int32
 
 
 (* Operation Test *)
@@ -314,6 +326,10 @@ sobel ::= 'sobel'^
 (* Continuous Test *)
 // !try "plugin('init'); load 'mountain.jpg'; contrast 5.0; brightness 2.0;"
 
+(* Rotate *)
+//!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('rotate', 90);"
+//!try "plugin('init'); load 'mountain.jpg'; rotate 180;"
+
 (* Grayscale *)
 //!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('grayscale');"
 //!try "plugin('init'); load 'mountain.jpg'; grayscale;"
@@ -321,3 +337,12 @@ sobel ::= 'sobel'^
 (* Sobel *)
 //!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('sobel');"
 //!try "plugin('init'); load 'mountain.jpg'; sobel;"
+
+(* summerVibe *)
+//!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('summerVibe');"
+//!try "plugin('init'); load 'mountain.jpg'; summerVibe;"
+
+(* Blur *)
+//!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('blur', 1);"
+//!try "plugin('init'); load 'mountain.jpg'; blur 2;"
+
