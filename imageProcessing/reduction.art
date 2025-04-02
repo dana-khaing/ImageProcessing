@@ -4,28 +4,57 @@
 
 (* Term rewrite rules *)
 -assign  _n |> __int32(_)    --- assign(_X,_n),_sig -> __done,__put(_sig,_X,_n)
--assignR _E,_sig -> _I,_sigP --- assign(_X,_E),_sig -> assign(_X,_I),_sigP
-
 -assign  _n |> __real64(_)    --- assign(_X,_n),_sig -> __done,__put(_sig,_X,_n)
--assignR _E,_sig -> _I,_sigP --- assign(_X,_E),_sig -> assign(_X,_I),_sigP
-
 -assign  _n |> __bool(_)    --- assign(_X,_n),_sig -> __done,__put(_sig,_X,_n)
--assignR _E,_sig -> _I,_sigP --- assign(_X,_E),_sig -> assign(_X,_I),_sigP
+-assignR _E,_sig -> _EP,_sigP --- assign(_X,_E),_sig -> assign(_X,_EP),_sigP
 
+(* Additional assign operator *)
+-addAssign _n |> __int32(_)    --- addAssign(_X,_n),_sig -> assign(_X, add(deref(_X),_n)),_sig
+-addAssign _n |> __real64(_)    --- addAssign(_X,_n),_sig -> assign(_X, add(deref(_X),_n)),_sig
+
+(* Subtractional assign operator *)
+-subAssign _n |> __int32(_)    --- subAssign(_X,_n),_sig -> assign(_X, sub(deref(_X),_n)),_sig
+-subAssign _n |> __real64(_)    --- subAssign(_X,_n),_sig -> assign(_X, sub(deref(_X),_n)),_sig
+
+(* Multiplication assign operator *)
+-mulAssign _n |> __int32(_)    --- mulAssign(_X,_n),_sig -> assign(_X, mul(deref(_X),_n)),_sig
+-mulAssign _n |> __real64(_)    --- mulAssign(_X,_n),_sig -> assign(_X, mul(deref(_X),_n)),_sig
+
+(* Division assign operator *)
+-divAssign _n |> __int32(_)    --- divAssign(_X,_n),_sig -> assign(_X, div(deref(_X),_n)),_sig
+-divAssign _n |> __real64(_)    --- divAssign(_X,_n),_sig -> assign(_X, div(deref(_X),_n)),_sig
+
+(* Modulus assign operator *)
+-modAssign _n |> __int32(_)    --- modAssign(_X,_n),_sig -> assign(_X, mod(deref(_X),_n)),_sig
+-modAssign _n |> __real64(_)    --- modAssign(_X,_n),_sig -> assign(_X, mod(deref(_X),_n)),_sig
+
+(* Sequence Operators *)
+-sequenceForOnlyOneOperation _C1,_sig -> _C1P,_sigP --- seq(_C1),_sig -> _C1P,_sigP
 -sequenceDone                    --- seq(__done, _C),_sig -> _C,_sig
 -sequence _C1,_sig -> _C1P,_sigP --- seq(_C1,_C2),_sig -> seq(_C1P,_C2),_sigP
 
--ifTrue                        --- if(true,_C1),_sig -> _C1,_sig
--ifFalse                       --- if(false,_C1),_sig -> _C2,_sig
--ifResolve _E,_sig ->_EP,_sigP --- if(_E,_C1),_sig -> if(_EP,_C1),_sigP
+-ifTrue                        --- if(true, _C1), _sig -> _C1, _sig
+-ifFalse                       --- if(false, _C1), _sig -> __done, _sig
+-ifResolve _E, _sig -> _EP, _sigP --- if(_E, _C1), _sig -> if(_EP, _C1), _sigP
+-ChangeToIfForm                   --- if(_E, _C1, elseif(_E,_C1,_C2)), _sig -> if(_E,_C1,if(_E,_C1,_C2)), _sig
+-ifTrueWithElse                --- if(true, _C1, _C2), _sig -> _C1, _sig
+-ifFalseWithElse               --- if(false, _C1, _C2), _sig -> _C2, _sig
+-elseifResolve _E, _sig -> _EP, _sigP --- elseif(_E), _sig -> _EP, _sigP
+-ifResolveWithElse _E, _sig -> _EP, _sigP --- if(_E, _C1, _C2), _sig -> if(_EP, _C1, _C2), _sigP
 
--ifTrue                        --- if(true,_C1,_C2),_sig -> _C1,_sig
--ifFalse                       --- if(false,_C1,_C2),_sig -> _C2,_sig
--ifResolve _E,_sig ->_EP,_sigP --- if(_E,_C1,_C2),_sig -> if(_EP,_C1,_C2),_sigP
+-switchHandle                          --- switch(true,_C1,switch(_n,_C2)),_sig -> seq(_C1,switch(true,_C2)),_sig
+-switchHandleTrue                      --- switch(true,_C1,_C2),_sig -> seq(_C1,_C2),_sig
+-switchHandleFalse                     --- switch(false,_C1,_C2),_sig ->_C2,_sig
+-switchResolveWithBool _E, _sig -> _EP, _sigP --- switch(_E, _C1, _C2), _sig -> switch(_EP, _C1, _C2), _sigP
+-switchBaseForTrue                     --- switch(true, case(_c1, _e1)), _sig -> switch(true, _e1, __done), _sig
+-switchBase            _n|>__int32(_)  --- switch(_n, case(_c1, _e1)), _sig -> switch(eq(_n, _c1), _e1, __done), _sig
+-switchForMultipleTrue                 --- switch(true, case(_c1,_e1, _rest)), _sig -> switch(true, _e1, switch(true, _rest)), _sig
+-switchForMultiple                     --- switch(_n, case(_c1,_e1, _rest)), _sig -> switch(eq(_n, _c1), _e1, switch(_n, _rest)), _sig
+-switchResolve _e, _sig -> _ep, _sigP  --- switch(_e, _cases), _sig -> switch(_ep, _cases), _sigP
 
 -while --- while(_E,_C),_sig -> if(_E,seq(_C,while(_E,_C)),__done),_sig
 
--for --- for(_A,_B,_I,_D), _sig -> seq(_A, while(_B, seq(_D, _I))), _sig
+-for --- for(_A,_B,_I,_E), _sig -> seq(_A, while(_B, seq(_I,_E))), _sig
 
 -deref --- deref(_R),_sig -> __get(_sig,_R),_sig
 
@@ -33,50 +62,74 @@
 
 -eq  _n1 |> __int32(_) _n2 |> __int32(_)      --- eq(_n1,_n2),_sig  -> __eq(_n1,_n2),_sig
 -eqR _n |> __int32(_)  _E2,_sig -> _I2,_sigP  --- eq(_n,_E2) ,_sig  -> eq(_n,_I2),_sigP
+-eq  _n1 |> __real64(_) _n2 |> __real64(_)      --- eq(_n1,_n2),_sig  -> __eq(_n1,_n2),_sig
+-eqR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- eq(_n,_E2) ,_sig  -> eq(_n,_I2),_sigP
 -eqL _E1,_sig -> _I1,_sigP                    --- eq(_E1,_E2),_sig  -> eq(_I1,_E2),_sigP
 
 -ne  _n1 |> __int32(_) _n2 |> __int32(_)      --- ne(_n1,_n2),_sig  -> __ne(_n1,_n2),_sig
 -neR _n |> __int32(_)  _E2,_sig -> _I2,_sigP  --- ne(_n,_E2) ,_sig  -> ne(_n,_I2),_sigP
+-ne  _n1 |> __real64(_) _n2 |> __real64(_)      --- ne(_n1,_n2),_sig  -> __ne(_n1,_n2),_sig
+-neR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- ne(_n,_E2) ,_sig  -> ne(_n,_I2),_sigP
 -neL _E1,_sig -> _I1,_sigP                    --- ne(_E1,_E2),_sig  -> ne(_I1,_E2),_sigP
 
 -gt  _n1 |> __int32(_)  _n2 |> __int32(_)     --- gt(_n1,_n2),_sig  ->  __gt(_n1,_n2),_sig 
 -gtR _n |> __int32(_)  _E2,_sig -> _I2,_sigP  --- gt(_n,_E2),_sig   -> gt(_n,_I2),_sigP
+-gt  _n1 |> __real64(_)  _n2 |> __real64(_)     --- gt(_n1,_n2),_sig  ->  __gt(_n1,_n2),_sig 
+-gtR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- gt(_n,_E2),_sig   -> gt(_n,_I2),_sigP
 -gtL _E1,_sig -> _I1,_sigP                    --- gt(_E1,_E2),_sig  -> gt(_I1,_E2),_sigP
 
 -lt  _n1 |> __int32(_)  _n2 |> __int32(_)     --- lt(_n1,_n2),_sig  ->  __lt(_n1,_n2),_sig 
 -ltR _n |> __int32(_)  _E2,_sig -> _I2,_sigP  --- lt(_n,_E2),_sig   -> lt(_n,_I2),_sigP
+-lt  _n1 |> __real64(_)  _n2 |> __real64(_)     --- lt(_n1,_n2),_sig  ->  __lt(_n1,_n2),_sig 
+-ltR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- lt(_n,_E2),_sig   -> lt(_n,_I2),_sigP
 -ltL _E1,_sig -> _I1,_sigP                    --- lt(_E1,_E2),_sig  -> lt(_I1,_E2),_sigP
 
 -ge  _n1 |> __int32(_)  _n2 |> __int32(_)     --- ge(_n1,_n2),_sig  ->  __ge(_n1,_n2),_sig 
 -geR _n |> __int32(_)  _E2,_sig -> _I2,_sigP  --- ge(_n,_E2),_sig   -> ge(_n,_I2),_sigP
--geL _E1,_sig -> _I1,_sigP                    --- ge(_E1,_E2),_sig  -> ge(_I1,_E2),_sigP
+-ge  _n1 |> __real64(_)  _n2 |> __real64(_)     --- ge(_n1,_n2),_sig  ->  __ge(_n1,_n2),_sig 
+-geR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- ge(_n,_E2),_sig   -> ge(_n,_I2),_sigP
+-geL _E1,_sig -> _I1,_sigP                    --- ge(_E1,_E2),_sig  -> ge(_I1,_E2),_si
 
 -le  _n1 |> __int32(_)  _n2 |> __int32(_)     --- le(_n1,_n2),_sig  ->  __le(_n1,_n2),_sig 
 -leR _n |> __int32(_)  _E2,_sig -> _I2,_sigP  --- le(_n,_E2),_sig   -> le(_n,_I2),_sigP
+-le  _n1 |> __real64(_)  _n2 |> __real64(_)     --- le(_n1,_n2),_sig  ->  __le(_n1,_n2),_sig 
+-leR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- le(_n,_E2),_sig   -> le(_n,_I2),_sigP
 -leL _E1,_sig -> _I1,_sigP                    --- le(_E1,_E2),_sig  -> le(_I1,_E2),_sigP
 
 -add  _n1 |> __int32(_) _n2 |> __int32(_)     --- add(_n1,_n2),_sig -> __add(_n1,_n2),_sig
 -addR _n |> __int32(_) _E2,_sig -> _I2,_sigP  --- add(_n,_E2),_sig  -> add(_n,_I2),_sigP
+-add  _n1 |> __real64(_) _n2 |> __real64(_)     --- add(_n1,_n2),_sig -> __add(_n1,_n2),_sig
+-addR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- add(_n,_E2),_sig  -> add(_n,_I2),_sigP
 -addL _E1,_sig -> _I1,_sigP                   --- add(_E1,_E2),_sig -> add(_I1,_E2),_sigP
 
 -sub  _n1 |> __int32(_) _n2 |> __int32(_)     --- sub(_n1,_n2),_sig -> __sub(_n1,_n2),_sig
 -subR _n |> __int32(_) _E2,_sig -> _I2,_sigP  --- sub(_n,_E2),_sig  -> sub(_n,_I2),_sigP
+-sub  _n1 |> __real64(_) _n2 |> __real64(_)     --- sub(_n1,_n2),_sig -> __sub(_n1,_n2),_sig
+-subR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- sub(_n,_E2),_sig  -> sub(_n,_I2),_sigP
 -subL _E1,_sig -> _I1,_sigP                   --- sub(_E1,_E2),_sig -> sub(_I1,_E2),_sigP
 
 -mul  _n1 |> __int32(_) _n2 |> __int32(_)     --- mul(_n1,_n2),_sig -> __mul(_n1,_n2),_sig
 -mulR _n |> __int32(_) _E2,_sig -> _I2,_sigP  --- mul(_n,_E2),_sig  -> mul(_n,_I2),_sigP
+-mul  _n1 |> __real64(_) _n2 |> __real64(_)     --- mul(_n1,_n2),_sig -> __mul(_n1,_n2),_sig
+-mulR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- mul(_n,_E2),_sig  -> mul(_n,_I2),_sigP
 -mulL _E1,_sig -> _I1,_sigP                   --- mul(_E1,_E2),_sig -> mul(_I1,_E2),_sigP
 
 -div  _n1 |> __int32(_) _n2 |> __int32(_)     --- div(_n1,_n2),_sig -> __div(_n1,_n2),_sig
 -divR _n |> __int32(_) _E2,_sig -> _I2,_sigP  --- div(_n,_E2),_sig  -> div(_n,_I2),_sigP
+-div  _n1 |> __real64(_) _n2 |> __real64(_)     --- div(_n1,_n2),_sig -> __div(_n1,_n2),_sig
+-divR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- div(_n,_E2),_sig  -> div(_n,_I2),_sigP
 -divL _E1,_sig -> _I1,_sigP                   --- div(_E1,_E2),_sig -> div(_I1,_E2),_sigP
 
 -mod  _n1 |> __int32(_) _n2 |> __int32(_)     --- mod(_n1,_n2),_sig -> __mod(_n1,_n2),_sig
 -modR _n |> __int32(_) _E2,_sig -> _I2,_sigP  --- mod(_n,_E2),_sig  -> mod(_n,_I2),_sigP
+-mod  _n1 |> __real64(_) _n2 |> __real64(_)     --- mod(_n1,_n2),_sig -> __mod(_n1,_n2),_sig
+-modR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- mod(_n,_E2),_sig  -> mod(_n,_I2),_sigP
 -modL _E1,_sig -> _I1,_sigP                   --- mod(_E1,_E2),_sig -> mod(_I1,_E2),_sigP
 
 -exp  _n1 |> __int32(_) _n2 |> __int32(_)     --- exp(_n1,_n2),_sig -> __exp(_n1,_n2),_sig
 -expR _n |> __int32(_) _E2,_sig -> _I2,_sigP  --- exp(_n,_E2),_sig  -> exp(_n,_I2),_sigP
+-exp  _n1 |> __real64(_) _n2 |> __real64(_)     --- exp(_n1,_n2),_sig -> __exp(_n1,_n2),_sig
+-expR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- exp(_n,_E2),_sig  -> exp(_n,_I2),_sigP
 -expL _E1,_sig -> _I1,_sigP                   --- exp(_E1,_E2),_sig -> exp(_I1,_E2),_sigP
 
 (* postIncrement *)
@@ -85,9 +138,9 @@ deref(_ID), _sig -> _V, _sig  _V |> __int32(_)      assign(_ID, __add(_V, 1)), _
 postinc(_ID), _sig -> _V, _sigP
 
 (* postDecrement *)
-deref(_X), _sig -> _V, _sig  _V |> __int32(_)      assign(_X, __sub(_V, 1)), _sig -> _, _sigP
+deref(_ID), _sig -> _V, _sig  _V |> __int32(_)      assign(_ID, __sub(_V, 1)), _sig -> _, _sigP
 ---
-postdec(_X), _sig -> _V, _sigP
+postdec(_ID), _sig -> _V, _sigP
 
 (* preIncrement *)
 deref(_ID), _sig -> _V, _sig  _V |> __int32(_)      assign(_ID, __add(_V, 1)), _sig -> _, _sigP
@@ -98,54 +151,6 @@ preinc(_ID), _sig -> deref(_ID), _sigP
 deref(_ID), _sig -> _V, _sig  _V |> __int32(_)      assign(_ID, __sub(_V, 1)), _sig -> _, _sigP
 ---
 predec(_ID), _sig -> deref(_ID), _sigP
-
--eq  _n1 |> __real64(_) _n2 |> __real64(_)      --- eq(_n1,_n2),_sig  -> __eq(_n1,_n2),_sig
--eqR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- eq(_n,_E2) ,_sig  -> eq(_n,_I2),_sigP
--eqL _E1,_sig -> _I1,_sigP                    --- eq(_E1,_E2),_sig  -> eq(_I1,_E2),_sigP
-
--ne  _n1 |> __real64(_) _n2 |> __real64(_)      --- ne(_n1,_n2),_sig  -> __ne(_n1,_n2),_sig
--neR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- ne(_n,_E2) ,_sig  -> ne(_n,_I2),_sigP
--neL _E1,_sig -> _I1,_sigP                    --- ne(_E1,_E2),_sig  -> ne(_I1,_E2),_sigP
-
--gt  _n1 |> __real64(_)  _n2 |> __real64(_)     --- gt(_n1,_n2),_sig  ->  __gt(_n1,_n2),_sig 
--gtR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- gt(_n,_E2),_sig   -> gt(_n,_I2),_sigP
--gtL _E1,_sig -> _I1,_sigP                    --- gt(_E1,_E2),_sig  -> gt(_I1,_E2),_sigP
-
--lt  _n1 |> __real64(_)  _n2 |> __real64(_)     --- lt(_n1,_n2),_sig  ->  __lt(_n1,_n2),_sig 
--ltR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- lt(_n,_E2),_sig   -> lt(_n,_I2),_sigP
--ltL _E1,_sig -> _I1,_sigP                    --- lt(_E1,_E2),_sig  -> lt(_I1,_E2),_sigP
-
--ge  _n1 |> __real64(_)  _n2 |> __real64(_)     --- ge(_n1,_n2),_sig  ->  __ge(_n1,_n2),_sig 
--geR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- ge(_n,_E2),_sig   -> ge(_n,_I2),_sigP
--geL _E1,_sig -> _I1,_sigP                    --- ge(_E1,_E2),_sig  -> ge(_I1,_E2),_sigP
-
--le  _n1 |> __real64(_)  _n2 |> __real64(_)     --- le(_n1,_n2),_sig  ->  __le(_n1,_n2),_sig 
--leR _n |> __real64(_)  _E2,_sig -> _I2,_sigP  --- le(_n,_E2),_sig   -> le(_n,_I2),_sigP
--leL _E1,_sig -> _I1,_sigP                    --- le(_E1,_E2),_sig  -> le(_I1,_E2),_sigP
-
--add  _n1 |> __real64(_) _n2 |> __real64(_)     --- add(_n1,_n2),_sig -> __add(_n1,_n2),_sig
--addR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- add(_n,_E2),_sig  -> add(_n,_I2),_sigP
--addL _E1,_sig -> _I1,_sigP                   --- add(_E1,_E2),_sig -> add(_I1,_E2),_sigP
-
--sub  _n1 |> __real64(_) _n2 |> __real64(_)     --- sub(_n1,_n2),_sig -> __sub(_n1,_n2),_sig
--subR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- sub(_n,_E2),_sig  -> sub(_n,_I2),_sigP
--subL _E1,_sig -> _I1,_sigP                   --- sub(_E1,_E2),_sig -> sub(_I1,_E2),_sigP
-
--mul  _n1 |> __real64(_) _n2 |> __real64(_)     --- mul(_n1,_n2),_sig -> __mul(_n1,_n2),_sig
--mulR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- mul(_n,_E2),_sig  -> mul(_n,_I2),_sigP
--mulL _E1,_sig -> _I1,_sigP                   --- mul(_E1,_E2),_sig -> mul(_I1,_E2),_sigP
-
--div  _n1 |> __real64(_) _n2 |> __real64(_)     --- div(_n1,_n2),_sig -> __div(_n1,_n2),_sig
--divR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- div(_n,_E2),_sig  -> div(_n,_I2),_sigP
--divL _E1,_sig -> _I1,_sigP                   --- div(_E1,_E2),_sig -> div(_I1,_E2),_sigP
-
--mod  _n1 |> __real64(_) _n2 |> __real64(_)     --- mod(_n1,_n2),_sig -> __mod(_n1,_n2),_sig
--modR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- mod(_n,_E2),_sig  -> mod(_n,_I2),_sigP
--modL _E1,_sig -> _I1,_sigP                   --- mod(_E1,_E2),_sig -> mod(_I1,_E2),_sigP
-
--exp  _n1 |> __real64(_) _n2 |> __real64(_)     --- exp(_n1,_n2),_sig -> __exp(_n1,_n2),_sig
--expR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- exp(_n,_E2),_sig  -> exp(_n,_I2),_sigP
--expL _E1,_sig -> _I1,_sigP                   --- exp(_E1,_E2),_sig -> exp(_I1,_E2),_sigP
 
 (* Logical Operators *)
 
@@ -161,27 +166,7 @@ predec(_ID), _sig -> deref(_ID), _sigP
 -xorR _n |> __bool(_) _E2,_sig -> _I2,_sigP --- xor(_n,_E2),_sig  -> xor(_n,_I2),_sigP
 -xorL _E1,_sig -> _I1,_sigP                  --- xor(_E1,_E2),_sig -> xor(_I1,_E2),_sigP
 
--not _X,_sig -> _XP,_sigP--- not(_X),_sig -> __not(_XP),_sigP
-
-(* postIncrement *)
-deref(_ID), _sig -> _V, _sig  _V |> __real64(_)      assign(_ID, __add(_V, 1)), _sig -> _, _sigP
----
-postinc(_ID), _sig -> _V, _sigP
-
-(* postDecrement *)
-deref(_X), _sig -> _V, _sig  _V |> __real64(_)      assign(_X, __sub(_V, 1)), _sig -> _, _sigP
----
-postdec(_X), _sig -> _V, _sigP
-
-(* preIncrement *)
-deref(_ID), _sig -> _V, _sig  _V |> __real64(_)      assign(_ID, __add(_V, 1)), _sig -> _, _sigP
----
-preinc(_ID), _sig -> deref(_ID), _sigP
-
-(* preDecrement *)
-deref(_ID), _sig -> _V, _sig  _V |> __real64(_)      assign(_ID, __sub(_V, 1)), _sig -> _, _sigP
----
-predec(_ID), _sig -> deref(_ID), _sigP
+-not _X,_sig -> _XP,_sigP --- not(_X),_sig -> __not(_XP),_sigP
 
 
 -plugin --- plugin(_O),_sig -> __plugin(_O),_sig
@@ -189,6 +174,7 @@ predec(_ID), _sig -> deref(_ID), _sigP
 -plugin --- plugin(_O, _X, _Y),_sig -> __plugin(_O, _X, _Y),_sig
 -plugin --- plugin(_O, _X, _Y, _Z),_sig -> __plugin(_O, _X, _Y, _Z),_sig
 
+-init --- init,_sig -> __plugin("init"),_sig
 -load   --- load(_X),_sig -> __plugin("load", _X),_sig
 -invert --- invert,_sig -> __plugin("invert"),_sig
 -brightness --- brightness(_X),_sig -> __plugin("brightness",_X),_sig
@@ -202,16 +188,27 @@ predec(_ID), _sig -> deref(_ID), _sigP
 (*  CFG rules *)
 
 seq ::= statement^^ | statement seq
-statement ::= assign^^ | while^^ |for^^ | if^^ | plugin^^ ';'^ | load^^ ';'^ | invert^^ ';'^ | brightness^^ ';'^ | contrast^^ ';'^ | rotate^^ ';'^ | grayscale^^ ';'^ | sobel^^ ';'^ | summerVibe^^ ';'^ | blur^^ ';'^
+statement ::= assign^^ | addAssign^^| subAssign^^| mulAssign^^| divAssign^^ | modAssign^^ | while^^ |for^^ | if^^ | plugin^^ ';'^ |init^^ ';'^| load^^ ';'^ | invert^^ ';'^ | brightness^^ ';'^ | contrast^^ ';'^ | rotate^^ ';'^ | grayscale^^ ';'^ | sobel^^ ';'^ | summerVibe^^ ';'^ | blur^^ ';'^| switch^^
+switch ::= 'switch'^ '('^ expression ')'^ '{'^ cases '}'^ 
+cases ::= case^^ | case^^ cases
+case ::= 'case'^ expression ':'^ statement | 'case'^ expression ':'^ statement ','^ cases^
 assign ::= &ID ':='^ expression ';'^
-while ::= 'while'^ expression 'do'^ seq
+addAssign ::= &ID '+='^ expression ';'^
+subAssign ::= &ID '-='^ expression ';'^
+mulAssign ::= &ID '*='^ expression ';'^
+divAssign ::= &ID '/='^ expression ';'^
+modAssign ::= &ID '%='^ expression ';'^
+while ::= 'while'^ expression 'do'^ seq 'fin'^
 for ::= 'for'^ assign expression ';'^ statement 'do'^ seq
-if ::= 'if'^ expression 'then'^ statement | 'if'^ expression 'then'^ statement 'else'^ statement
+if ::= 'if'^ expression 'then'^ statement | 'if'^ expression 'then'^ statement if_rest 
+if_rest ::= elseif^^ | elseif^^ if_rest
+elseif ::= 'elseif'^ expression 'then'^ statement | 'else'^ statement
 expressions ::= expression | expression ','^ expressions^
 expression ::= rels^^
-rels ::= e0^^ | and^^ | or^^
+rels ::= e0^^ | and^^ | or^^ | xor^^
   and ::= e0 '&&'^ e0
   or ::= e0 '||'^ e0
+  xor ::= e0 '^^'^ e0
 e0 ::= e1^^ | gt^^ | ge^^ | lt^^ | le^^ | ne^^ | eq^^
   gt ::= e1 '>'^ e1
   ge ::= e1 '>='^ e1
@@ -226,8 +223,9 @@ e2  ::= e3^^ | mul^^ | div^^ | mod^^
   mul ::= e2 '*'^ e3
   div ::= e2 '/'^ e3
   mod ::= e2 '%'^ e3
-e3 ::= e4^^ | neg^^
+e3 ::= e4^^ | neg^^ | not^^
   neg ::= '-'^ e4
+  not ::= '!'^ e4
 e4  ::= e5^^ | exp^^
   exp ::= e5 '**'^ e4
 e5  ::= e6^^ | postinc^^ | postdec^^
@@ -243,6 +241,7 @@ __real64 ::= &REAL
 deref   ::= &ID
 __bool ::= 'true' | 'false'
 plugin ::= 'plugin'^ '('^ expressions^ ')'^  
+init ::= 'init'^
 load ::= 'load'^ __string
 invert ::= 'invert'^
 brightness ::= 'brightness'^ __real64
@@ -253,56 +252,180 @@ sobel ::= 'sobel'^
 summerVibe ::= 'summerVibe'^
 blur ::= 'blur'^ __int32
 
+!trace 1
 
-(* Operation Test *)
-//!try seq(assign(a,6), seq(assign(b,9), while(ne(deref(a), deref(b)), if(gt(deref(a), deref(b)), assign(a, sub(deref(a), deref(b))), assign(b, sub(deref(b), deref(a))))))), __map
-//!try "a := 6; b := 6; if a > b then a := a * b; else b := b - a;"
-//!try "a := 6; b := 6; if a > b then a := a * b; else b := b - a;"
-//!try "a := 6; b := 6; if a <= b then a := a * b; else b := b - a;"
-//!try "a := 6; b := 6; if a >= b then a := a * b; else b := b - a;"
-//!try "a := 6; b := 6; if a != b then a :=  a * b ; else b := b - a;"
+(* Arithmetic Operations *)
+!try seq(assign(a, add(3, 2))), __map = __done, {a=5}
+!try seq(assign(a, sub(5, 3))), __map = __done, {a=2}
+!try seq(assign(a, mul(4, 2))), __map = __done, {a=8}
+!try seq(assign(a, div(6, 2))), __map = __done, {a=3}
+!try seq(assign(a, mod(7, 3))), __map = __done, {a=1}
+!try seq(assign(a, exp(2, 3))), __map = __done, {a=8}
+!try seq(assign(a, sub(3, mul(2, 2)))), __map = __done, {a=-1}
+!try seq(assign(a, mul(add(3, 2), 2))), __map = __done, {a=10}
+!try seq(assign(a, add(5.5, 2.3))), __map = __done, {a=7.8}
+!try seq(assign(a, div(10.0, 2.5))), __map = __done, {a=4.0}
+!try seq(assign(a, 3), for(assign(i, 0), lt(deref(i), 3),  assign(i,add(deref(i),1)), assign(a, add(deref(a), 1)))), __map = __done, {a=6, i=3}
 
-//!try "a := 6 ; b := 2; c := a / b;" // div
-//!try "a := 6 ; b := 2; c := a % b;" // mod
-//!try  "a := 6 ; b := 2 ; c := b ** a;" // expo
+!try "a := 3 + 2;" = __done, {a=5}
+!try "a := 5 - 3;" = __done, {a=2}
+!try "a := 4 * 2;" = __done, {a=8}
+!try "a := 6 / 2;" = __done, {a=3}
+!try "a := 7 % 3;" = __done, {a=1}
+!try "a := 2 ** 3;" = __done, {a=8}
+!try "a := 3 - 2 * 2;" = __done, {a=-1}
+!try "a := (3 + 2) * 2;" = __done, {a=10}
+!try "a := 5.5 + 2.3;" = __done, {a=7.8}
+!try "a := 10.0 / 2.5;" = __done, {a=4.0}
 
-(* Using GIFT operators *)
-//!try "a := 4; b := 5; c := 2 ;d := a + b * c;"
+(* Comparison *)
+!try eq(3,3),__map = true,{=}
+!try eq(4,3),__map = false,{=}
+!try ne(4,3),__map = true,{=}
+!try ne(3,3),__map = false,{=}
+!try seq(assign(a, gt(5, 3))), __map = __done, {a=true}
+!try seq(assign(a, lt(3, 5))), __map = __done, {a=true}
+!try seq(assign(a, ge(5, 5))), __map = __done, {a=true}
+!try seq(assign(a, le(3, 4))), __map = __done, {a=true}
+!try seq(assign(a, eq(5, 5))), __map = __done, {a=true}
+!try seq(assign(a, ne(5, 3))), __map = __done, {a=true}
+!try seq(assign(a, gt(3, 5))), __map = __done, {a=false}
+!try seq(assign(a, lt(5, 3))), __map = __done, {a=false}
+!try seq(assign(a, gt(3.5, 2.5))), __map = __done, {a=true}
+!try seq(assign(a, le(2.5, 2.5))), __map = __done, {a=true}
 
-(* Equality *)
-//!try eq(3,3),__map = true,{=}
-//!try eq(4,3),__map = false,{=}
-//!try ne(4,3),__map = true,{=}
-//!try ne(3,3),__map = false,{=}
+!try "a := 5 > 3;" = __done, {a=true}
+!try "a := 3 < 5;" = __done, {a=true}
+!try "a := 5 >= 5;" = __done, {a=true}
+!try "a := 3 <= 4;" = __done, {a=true}
+!try "a := 5 == 5;" = __done, {a=true}
+!try "a := 5 != 3;" = __done, {a=true}
+!try "a := 3 > 5;" = __done, {a=false}
+!try "a := 5 < 3;" = __done, {a=false}
+!try "a := 3.5 > 2.5;" = __done, {a=true}
+!try "a := 2.5 <= 2.5;" = __done, {a=true}
+
+(* Logical Operators *)
+!try and(true, true), __map = true, {=}
+!try and(true, false), __map = false, {=}
+!try and(false, false), __map = false, {=}
+!try or(true, false), __map = true, {=}
+!try or(false, false), __map = false, {=}
+!try or(true, true), __map = true, {=}
+!try xor(true, false), __map = true, {=}
+!try xor(true, true), __map = false, {=}
+!try not(true), __map = false, {=}
+!try not(false), __map = true, {=}
+!try seq(assign(a, and(true, false))), __map = __done, {a=false}
+!try seq(assign(a, or(true, false))), __map = __done, {a=true}
+!try "a := true && false;" = __done, {a=false}
+!try "a := true || false;" = __done, {a=true}
+!try "a := ! false;" = __done, {a=true}
+!try "a := true ^^ false;" = __done, {a=true}
+
+
+(* Assignment Operators *)
+!try seq(assign(a, 5), assign(b, postinc(a))), __map = __done, {a=6,b=5}
+!try seq(assign(a, 5), assign(b, postdec(a))), __map = __done, {a=4,b=5}
+!try seq(assign(a, 5), assign(b, preinc(a))), __map = __done, {a=6,b=6}
+!try seq(assign(a, 5), assign(b, predec(a))), __map = __done, {a=4,b=4}
+!try seq(assign(a, 5), seq(assign(b, postinc(a)), assign(b, postinc(a)))), __map = __done, {a=7,b=6}
+!try seq(assign(a, 5), seq(assign(b, predec(a)), assign(b, postdec(a)))), __map = __done, {a=3,b=4}
+!try seq(assign(a, 5), seq(assign(b, postinc(a)), assign(b, predec(a)))), __map = __done, {a=5,b=5}
+!try seq(assign(a, 5), addAssign(a,1)), __map = __done, {a=6}
+
+!try "a := 5; b := a++;" = __done, {a=6,b=5}
+!try "a := 5; b := a--;" = __done, {a=4,b=5}
+!try "a := 5; b := ++a;" = __done, {a=6,b=6}
+!try "a := 5; b := --a;" = __done, {a=4,b=4}
+!try "a := 5; b:= a++; b:= a++;" = __done, {a=7,b=6}
+!try "a := 5; b:= --a; b:= a--;" = __done, {a=3,b=4}
+!try "a := 5; b:= a++; b:= --a;" = __done, {a=5,b=5}
+
+(* Operation Assignment *)
+!try seq(assign(a, 5), addAssign(a,1)), __map = __done, {a=6}
+!try seq(assign(a, 5), subAssign(a,1)), __map = __done, {a=4}
+!try seq(assign(a, 5), mulAssign(a,2)), __map = __done, {a=10}
+!try seq(assign(a, 5), divAssign(a,2)), __map = __done, {a=2}
+!try seq(assign(a, 5), modAssign(a,2)), __map = __done, {a=1}
+!try "a := 5; a += 1;" = __done, {a=6}
+!try "a := 5; a -= 1;" = __done, {a=4}
+!try "a := 5; a *= 2;" = __done, {a=10}
+!try "a := 5; a /= 2;" = __done, {a=2}
+!try "a := 5; a %= 2;" = __done, {a=1}
 
 (* For Loop *)
-//!try for(
-//  seq(assign(a, 11), assign(b,13)),             
-//  ne(deref(a), deref(b)),                     
-//  __done,                                       
-//  if(
-//    gt(deref(a), deref(b)), 
-//    assign(a, sub(deref(a), deref(b))), 
-//    assign(b, sub(deref(b), deref(a)))
-//  )
-//), __map
-//!try "a := 3; for i := 0; i < 3; i := i + 1; do a := a + 1;"
+!try seq(assign(a, 0), for(assign(i, 0), lt(deref(i), 3), addAssign(i,1), assign(a, add(deref(a), 1)))), __map = __done, {a=3,i=3}
+!try seq(assign(a, 0), for(assign(i, 0), lt(deref(i), 3), addAssign(i,1), assign(a, add(deref(a), 1)))), __map = __done, {a=3,i=3}
+!try seq(assign(a, 3), for(assign(i, 0), lt(deref(i), 3),  assign(i,add(deref(i),1)), assign(a, add(deref(a), 1)))), __map
+!try seq(assign(a, 3), for(assign(i, 0), lt(deref(i), 3),  assign(i,preinc(i)), assign(a, add(deref(a), 1)))), __map
+!try "a := 0; for i := 0; i < 3; i += 1; do a := a + 1;" = __done, {a=3,i=3}
+!try "a := 0; for i := 0; i < 3; i :=++i; do a := a + 1;" = __done, {a=3,i=3}
 
-(* Logical Gate *)
-//!try and(true, true), __map
-//!try not(true), __map
-//!try or(true, false), __map
-//!try and(and(false, false), xor(false, false)), __map
-//!try not(or(false, true)), __map
-//!try "a := 3; b := 4; if a < 10 || b > 1 then a := a + b;"
-//!try "a := 3; b := 4; if a > 10 && b > 1 then a := a + b; else b := a + b;"
+(* While Loop *)
+!try seq(assign(a, 0), while(lt(deref(a), 3), assign(a, add(deref(a), 1)))), __map = __done, {a=3}
+!try seq(assign(a, 0), seq(assign(b, 0), while(lt(deref(a), 3), seq(assign(b, add(deref(b), deref(a))), assign(a, add(deref(a), 1)))))), __map = __done, {a=3,b=3}
+!try seq(assign(a,6), seq(assign(b,9), while(ne(deref(a), deref(b)), if(gt(deref(a), deref(b)), assign(a, sub(deref(a), deref(b))), assign(b, sub(deref(b), deref(a))))))), __map = __done, {a=3,b=3}
+!try "a := 0; while a < 3 do a := a + 1; fin" = __done, {a=3}
+!try "a := 0; b := 0; while a < 3 do b := b + a; a := a + 1; fin" = __done, {a=3,b=3}
 
-(* postIncrement & postDecrement *)
-//!try  "a := 6; b := a ++;"
-//!try  "a := 6; b := a --;"
-(* preIncrement & preDecrement *)
-//!try  "a := 6; b := ++ a;"
-//!try  "a := 6; b := -- a;"
+(* if statement *)
+!try seq(assign(a, 5), if(gt(deref(a), 3), assign(b, 10))), __map = __done, {a=5,b=10}
+!try seq(assign(a, 5), if(gt(deref(a), 3), assign(b, 10))), __map = __done, {a=5,b=10}
+!try seq(assign(a, 2), if(gt(deref(a), 3), assign(b, 10))), __map = __done, {a=2}
+!try seq(assign(a, 5), if(gt(deref(a), 3), assign(b, 10), assign(c, 20))), __map = __done, {a=5,b=10}
+!try seq(assign(a, 2), if(gt(deref(a), 3), assign(b, 10), assign(c, 20))), __map = __done, {a=2,c=20}
+!try seq(assign(a, 2), if(eq(deref(a), 1), assign(b, 10), if(eq(deref(a), 2), assign(c, 20), assign(d, 30)))), __map = __done, {a=2,c=20}
+!try seq(assign(a, 3), if(eq(deref(a), 1), assign(b, 10), if(eq(deref(a), 2), assign(c, 20), assign(d, 30)))), __map = __done, {a=3,d=30}
+!try seq(assign(a, 5), if(gt(deref(a), 0), if(lt(deref(a), 10), assign(b, mul(deref(a), 2))))), __map = __done, {a=5,b=10}
+!try seq(assign(a, 5), if(eq(deref(a), 1), assign(b, 10), if(eq(deref(a), 2), assign(c, 20), assign(d, 30)))), __map = __done, {a=5,d=30}
+!try seq(assign(a, 3), seq(assign(b, 3), seq(assign(c, 3), if(eq(deref(c), 1), assign(a, add(deref(a), deref(b))), if(eq(deref(c), 2), assign(a, mul(deref(a), deref(b))), if(eq(deref(c), 3), assign(a, exp(deref(a), 3)), if(eq(deref(c), 4), assign(a, add(deref(a), deref(c))), assign(d, 5)))))))), __map = __done, {a=27,b=3,c=3}
+!try seq(assign(a, 5), seq(assign(b, 3), if(gt(deref(a), deref(b)), assign(c, mul(deref(a), deref(b))), assign(c, add(deref(a), deref(b)))))), __map = __done, {a=5,b=3,c=15}
+//!try seq(assign(a,3),seq(assign(b,3),seq(assign(c,5),if(eq(deref(c),1),assign(a,add(a,deref(b))),if(eq(deref(c),2),assign(a,mul(deref(a),deref(b))),if(eq(deref(c),3),assign(a, exp(deref(a),3)),if(eq(deref(c),4),assign(a,add(deref(a),deref(c))),if(eq(deref(c),5),assign(d,5))))))))),{=}
+!try "a := 5; if a > 3 then b := 10;" = __done, {a=5,b=10}
+!try "a := 5; if a> 3 then b:=10; " = __done, {a=5,b=10}
+!try "a := 2; if a > 3 then b := 10;" = __done, {a=2}
+!try "a := 5; if a > 3 then b := 10; else c := 20;" = __done, {a=5,b=10}
+!try "a := 2; if a > 3 then b := 10; else c := 20;" = __done, {a=2,c=20}
+!try "a := 2; if a == 1 then b := 10; elseif a == 2 then c := 20; else d := 30;" = __done, {a=2,c=20}
+!try "a := 3; if a == 1 then b := 10; elseif a == 2 then c := 20; else d := 30;" = __done, {a=3,d=30}
+!try "a := 5; if a > 0 then if a < 10 then b := a * 2;" = __done, {a=5,b=10}
+
+(* elseif test*)
+!try "a := 5; if a == 1 then b := 10; elseif a == 2 then c := 20; else d := 30;" = __done, {a=5,d=30}
+!try "a := 3; b := 3; c := 3; if c == 1 then a := a + b; elseif c == 2 then a := a * b; elseif c == 3 then a := a ** 3; elseif c == 4 then a := a + c; else d := 5;" = __done, {a=27,b=3,c=3}
+
+(* Switch Case *)
+!try seq(assign(a, 1), switch(deref(a), case(1, assign(b, 2), case(2, assign(c, 3))))), __map = __done, {a=1,b=2,c=3}
+!try seq(assign(a, 2), switch(deref(a), case(1, assign(b, 2), case(2, assign(c, 3))))), __map = __done, {a=2,c=3}
+!try seq(assign(a, 3), switch(deref(a), case(1, assign(b, 2), case(2, assign(c, 3), case(3, assign(d, 4)))))), __map = __done, {a=3,d=4}
+!try seq(assign(a, 0), switch(deref(a), case(1, assign(b, 2), case(2, assign(c, 3))))), __map = __done, {a=0}
+//!try seq(assign(a,3),switch(deref(a),case(1,assign(b,10),case(2,assign(c,3),case(3,assign(d,4)))))),{=}
+//!try "a := 1; switch(a) { case 1 : b:= 2;  case 2: c:=3;}"
+//!try "a := 2; switch(a) { case 1 : b:= 2; case 2: c:=3; case 3: d:=4;} "
+!try "a := 1; switch(a) { case 1: b := 2; case 2: c := 3; }" = __done, {a=1,b=2,c=3}
+!try "a := 2; switch(a) { case 1: b := 2; case 2: c := 3; }" = __done, {a=2,c=3}
+!try "a := 3; switch(a) { case 1: b := 2; case 2: c := 3; case 3: d := 4; }" = __done, {a=3,d=4}
+!try "a := 0; switch(a) { case 1: b := 2; case 2: c := 3; }" = __done, {a=0}
+
+(* Mixed Operation *)
+!try "a := 5; b := 3; if a > b then c := a * b; else c := a + b;" = __done, {a=5,b=3,c=15}
+!try "a := 0; for i := 0; i < 5; i := ++i; do a := a + i;" = __done, {a=15,i=5}
+!try "a := 3; b := a++; if b < a then c := a * b;" = __done, {a=4,b=3,c=12}
+!try "a := 5; switch(a > 3) { case 1: b := 10; }" = __done, {a=5,b=10}
+
+(* Complex Scenarios *)
+!try seq(assign(a, 0), for(assign(i, 0), lt(deref(i), 5), assign(i, add(deref(i), 1)), assign(a, add(deref(a), deref(i))))), __map = __done, {a=15,i=5}
+!try seq(assign(a, 3), seq(assign(b, postinc(a)), if(lt(deref(b), deref(a)), assign(c, mul(deref(a), deref(b)))))), __map = __done, {a=4,b=3,c=12}
+!try seq(assign(a, 5), switch(gt(deref(a), 3), case(1, assign(b, 10)))), __map = __done, {a=5,b=10}
+!try seq(assign(a, 0), seq(assign(b, 10), while(lt(deref(a), deref(b)), if(eq(mod(deref(a), 2), 0), assign(a, add(deref(a), 2)), assign(a, add(deref(a), 1)))))), __map = __done, {a=10,b=10}
+!try seq(assign(a, 3), seq(assign(b, 0), for(assign(i, 0), lt(deref(i), deref(a)), assign(i, add(deref(i), 1)), assign(b, add(deref(b), mul(deref(i), 2)))))), __map = __done, {a=3,b=12,i=3}
+!try seq(assign(a, 5), if(gt(deref(a), 3), assign(b, exp(deref(a), 2)), if(eq(deref(a), 5), assign(c, mul(deref(a), 2))))), __map = __done, {a=5,b=25}
+
+
+!try "a := 0; b := 10; while a < b do if a % 2 == 0 then a := a + 2; else a := a + 1; fin" = __done, {a=10,b=10}
+!try "a := 3; b := 0; for i := 0; i < a; i := ++i; do b := b + i * 2;" = __done, {a=3,b=12,i=3}
+!try "a := 5; if a > 3 then b := a ** 2; elseif a == 5 then c := a * 2;" = __done, {a=5,b=25}
 
 (* Plugin Testing *)
 (* Loading input *)
@@ -316,33 +439,32 @@ blur ::= 'blur'^ __int32
 (* Brightness *)
 //!try "plugin('init'); plugin('load', 'GERTank.PNG'); plugin('brightness',0.4);"
 //!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('brightness',5.0);"
-//!try "plugin('init'); load 'mountain.jpg'; brightness 0.4;"
-//!try "plugin('init'); load 'mountain.jpg'; brightness 5.0;"
+//!try "plugin('init'); load 'mountain.jpg'; brightness 0.4;" = __done, {=}
+//!try "plugin('init'); load 'mountain.jpg'; brightness 5.0;" = __done, {=}
 
 (* Contrast *)
 //!try "plugin('init'); plugin('load', 'GERTank.PNG'); plugin('contrast',2.0);"
-//!try "plugin('init'); load 'mountain.jpg'; contrast 5.0;"
+//!try "init; load 'mountain.jpg'; contrast 5.0;" = __done, {=}
 
 (* Continuous Test *)
-// !try "plugin('init'); load 'mountain.jpg'; contrast 5.0; brightness 2.0;"
+//!try "init; load 'mountain.jpg'; contrast 5.0; brightness 2.0;" = __done, {=}
 
 (* Rotate *)
 //!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('rotate', 90);"
-//!try "plugin('init'); load 'mountain.jpg'; rotate 180;"
+//!try "init; load 'mountain.jpg'; rotate 180;" = __done, {=}
 
 (* Grayscale *)
 //!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('grayscale');"
-//!try "plugin('init'); load 'mountain.jpg'; grayscale;"
+//!try "init; load 'mountain.jpg'; grayscale;" = __done, {=}
 
 (* Sobel *)
 //!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('sobel');"
-//!try "plugin('init'); load 'mountain.jpg'; sobel;"
+//!try "init; load 'mountain.jpg'; sobel;" = __done, {=}
 
 (* summerVibe *)
 //!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('summerVibe');"
-//!try "plugin('init'); load 'mountain.jpg'; summerVibe;"
+//!try "init; load 'mountain.jpg'; summerVibe;" = __done, {=}
 
 (* Blur *)
 //!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('blur', 1);"
-//!try "plugin('init'); load 'mountain.jpg'; blur 2;"
-
+!try "init; load 'mountain.jpg'; blur 2;" = __done, {=}

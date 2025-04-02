@@ -13,6 +13,8 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import uk.ac.rhul.cs.csle.art.term.AbstractValuePlugin;
 import uk.ac.rhul.cs.csle.art.util.Util;
+import javafx.application.Platform;
+
 
 public class ARTValuePlugin extends AbstractValuePlugin {
   int windowX = 1200, windowY = 450;
@@ -29,6 +31,7 @@ public class ARTValuePlugin extends AbstractValuePlugin {
   @Override
   public Object plugin(Object... args) {
     switch ((String) args[0]) {
+
     case "init":
       System.out.println("Initialising window");
       Stage stage = new Stage();
@@ -36,7 +39,7 @@ public class ARTValuePlugin extends AbstractValuePlugin {
       stage.setTitle("Image processing display from an ART language");
       stage.show();
       break;
-
+  
     case "load":
       InputStream inputStream = null;
       try {
