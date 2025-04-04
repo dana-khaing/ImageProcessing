@@ -4,14 +4,156 @@ import uk.ac.rhul.cs.csle.art.interpret.AbstractAttributeBlock;
 import uk.ac.rhul.cs.csle.art.util.Util;
  import java.util.Map; import java.util.HashMap; 
 public class ARTGeneratedActions extends AbstractActions {
- Map<String, Integer> variables = new HashMap<>(); 
+ Map<String, Object> variables = new HashMap<>(); 
    Map<String, AbstractAttributeBlock> procedures = new HashMap<>(); 
    int successCount = 0; 
    int failCount = 0;
    int switchVal;
-   boolean CheckContinues= false;
-   
-  public String name() { return "2025-04-02 20:48:58"; }
+   boolean CheckContinues = false;
+
+Object arithmeticOp(Object a, Object b, String op) {
+    if (a instanceof Integer && b instanceof Integer) {
+        int ia = (Integer) a;
+        int ib = (Integer) b;
+        switch (op) {
+            case "+": return ia + ib;
+            case "-": return ia - ib;
+            case "*": return ia * ib;
+            case "/": return ia / ib;
+            case "%": return ia % ib;
+        }
+    } else if (a instanceof Double || b instanceof Double) {
+        double da = (a instanceof Double) ? (Double) a : (Integer) a;
+        double db = (b instanceof Double) ? (Double) b : (Integer) b;
+        switch (op) {
+            case "+": return da + db;
+            case "-": return da - db;
+            case "*": return da * db;
+            case "/": return da / db;
+            case "%": return da % db;
+        }
+    }
+    return 0; // Default for unsupported types
+}
+
+boolean toBoolean(Object o) {
+    if (o instanceof Boolean) {
+        return (Boolean) o;
+    } else if (o instanceof Number) {
+        return ((Number) o).doubleValue() != 0;
+    }
+    return false; // Default
+}
+
+boolean compare(Object a, Object b, String op) {
+    if (a instanceof Integer && b instanceof Integer) {
+        int ia = (Integer) a;
+        int ib = (Integer) b;
+        switch (op) {
+            case ">": return ia > ib;
+            case "<": return ia < ib;
+            case ">=": return ia >= ib;
+            case "<=": return ia <= ib;
+            case "==": return ia == ib;
+            case "!=": return ia != ib;
+        }
+    } else if (a instanceof Double || b instanceof Double) {
+        double da = (a instanceof Double) ? (Double) a : (Integer) a;
+        double db = (b instanceof Double) ? (Double) b : (Integer) b;
+        switch (op) {
+            case ">": return da > db;
+            case "<": return da < db;
+            case ">=": return da >= db;
+            case "<=": return da <= db;
+            case "==": return da == db;
+            case "!=": return da != db;
+        }
+    } else if (a instanceof Boolean && b instanceof Boolean) {
+        boolean ba = (Boolean) a;
+        boolean bb = (Boolean) b;
+        switch (op) {
+            case "==": return ba == bb;
+            case "!=": return ba != bb;
+        }
+    }
+    return false; // Default
+}
+
+Object negate(Object o) {
+    if (o instanceof Integer) {
+        return -(Integer) o;
+    } else if (o instanceof Double) {
+        return -(Double) o;
+    }
+    return 0; // Default
+}
+
+boolean logicalNot(Object o) {
+    if (o instanceof Boolean) {
+        return !(Boolean) o;
+    } else if (o instanceof Number) {
+        return ((Number) o).doubleValue() == 0;
+    }
+    return true; // Default
+}
+
+Object increment(Object o) {
+    if (o instanceof Integer) {
+        return (Integer) o + 1;
+    } else if (o instanceof Double) {
+        return (Double) o + 1.0;
+    }
+    return o; // No change for other types
+}
+
+Object decrement(Object o) {
+    if (o instanceof Integer) {
+        return (Integer) o - 1;
+    } else if (o instanceof Double) {
+        return (Double) o - 1.0;
+    }
+    return o; // No change for other types
+}
+
+double toDouble(Object o) {
+    if (o instanceof Double) {
+        return (Double) o;
+    } else if (o instanceof Integer) {
+        return (Integer) o;
+    }
+    return 0.0; // Default
+}
+
+int toInt(Object o) {
+    if (o instanceof Integer) {
+        return (Integer) o;
+    }
+    return 0; // Default
+}
+
+  public String name() { return "2025-04-03 03:04:38"; }
+
+  public class ART_C_BOOLEAN extends AbstractAttributeBlock {
+    ART_C_BOOLEAN BOOLEAN = this; Object v;
+
+    public void initRHSAttributeBlock(int nodeNumber, int term) {
+      switch(nodeNumber){
+      }
+    }
+
+    public AbstractAttributeBlock getAttributes(int nodeNumber) {
+      switch(nodeNumber){
+      default: Util.fatal("getAttributes: unknown node " + nodeNumber + ". Probable out-of-date ARTGeneratedActions - regenerate and recompile"); return null;
+      }
+    }
+
+    public void action(int nodeNumber) {
+      switch(nodeNumber){
+      case 271: { BOOLEAN.v = true; }  break;
+      case 274: { BOOLEAN.v = false; }  break;
+      }
+    }
+  }
 
   public class ART_C_ID extends AbstractAttributeBlock {
     ART_C_ID ID = this; String v;
@@ -29,13 +171,13 @@ public class ARTGeneratedActions extends AbstractActions {
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 262: ID.v = lexeme();  break;
+      case 278: { ID.v = lexeme(); }  break;
       }
     }
   }
 
   public class ART_C_INTEGER extends AbstractAttributeBlock {
-    ART_C_INTEGER INTEGER = this; int v;
+    ART_C_INTEGER INTEGER = this; Object v;
 
     public void initRHSAttributeBlock(int nodeNumber, int term) {
       switch(nodeNumber){
@@ -50,13 +192,13 @@ public class ARTGeneratedActions extends AbstractActions {
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 266: INTEGER.v = Integer.parseInt(lexeme());  break;
+      case 282: { INTEGER.v = Integer.parseInt(lexeme()); }  break;
       }
     }
   }
 
   public class ART_C_REAL extends AbstractAttributeBlock {
-    ART_C_REAL REAL = this; double v;
+    ART_C_REAL REAL = this; Object v;
 
     public void initRHSAttributeBlock(int nodeNumber, int term) {
       switch(nodeNumber){
@@ -71,7 +213,7 @@ public class ARTGeneratedActions extends AbstractActions {
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 270: REAL.v = Double.parseDouble(lexeme());  break;
+      case 286: { REAL.v = Double.parseDouble(lexeme()); }  break;
       }
     }
   }
@@ -92,7 +234,7 @@ public class ARTGeneratedActions extends AbstractActions {
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 274: STRING_SQ.v = lexemeCore().translateEscapes();  break;
+      case 290: { STRING_SQ.v = lexemeCore().translateEscapes(); }  break;
       }
     }
   }
@@ -102,310 +244,323 @@ public class ARTGeneratedActions extends AbstractActions {
 
     public void initRHSAttributeBlock(int nodeNumber, int term) {
       switch(nodeNumber){
-      case 280: statements1 = new ART_C_statements(); statements1.term = term; break;
-      case 287: statements1 = new ART_C_statements(); statements1.term = term; break;
-      case 292: statements1 = new ART_C_statements(); statements1.term = term; break;
-      case 298: e01 = new ART_C_e0(); e01.term = term; break;
-      case 300: statements1 = new ART_C_statements(); statements1.term = term; break;
-      case 303: cases1 = new ART_C_cases(); cases1.term = term; break;
-      case 307: e01 = new ART_C_e0(); e01.term = term; break;
+      case 296: statements1 = new ART_C_statements(); statements1.term = term; break;
+      case 304: statements1 = new ART_C_statements(); statements1.term = term; break;
       case 309: statements1 = new ART_C_statements(); statements1.term = term; break;
-      case 310: cases1 = new ART_C_cases(); cases1.term = term; break;
-      case 314: e01 = new ART_C_e0(); e01.term = term; break;
-      case 316: statements1 = new ART_C_statements(); statements1.term = term; break;
-      case 319: cases1 = new ART_C_cases(); cases1.term = term; break;
-      case 323: e01 = new ART_C_e0(); e01.term = term; break;
+      case 313: e01 = new ART_C_e0(); e01.term = term; break;
+      case 315: statements1 = new ART_C_statements(); statements1.term = term; break;
+      case 318: cases1 = new ART_C_cases(); cases1.term = term; break;
+      case 322: e01 = new ART_C_e0(); e01.term = term; break;
       case 325: statements1 = new ART_C_statements(); statements1.term = term; break;
-      case 331: e01 = new ART_C_e0(); e01.term = term; break;
-      case 333: statements1 = new ART_C_statements(); statements1.term = term; break;
+      case 326: cases1 = new ART_C_cases(); cases1.term = term; break;
+      case 330: e01 = new ART_C_e0(); e01.term = term; break;
+      case 332: statements1 = new ART_C_statements(); statements1.term = term; break;
+      case 333: cases1 = new ART_C_cases(); cases1.term = term; break;
       case 337: e01 = new ART_C_e0(); e01.term = term; break;
       case 339: statements1 = new ART_C_statements(); statements1.term = term; break;
+      case 345: e01 = new ART_C_e0(); e01.term = term; break;
+      case 348: statements1 = new ART_C_statements(); statements1.term = term; break;
+      case 352: e01 = new ART_C_e0(); e01.term = term; break;
+      case 354: statements1 = new ART_C_statements(); statements1.term = term; break;
       }
     }
 
     public AbstractAttributeBlock getAttributes(int nodeNumber) {
       switch(nodeNumber){
-      case 280: return statements1;
-      case 287: return statements1;
-      case 292: return statements1;
-      case 298: return e01;
-      case 300: return statements1;
-      case 303: return cases1;
-      case 307: return e01;
+      case 296: return statements1;
+      case 304: return statements1;
       case 309: return statements1;
-      case 310: return cases1;
-      case 314: return e01;
-      case 316: return statements1;
-      case 319: return cases1;
-      case 323: return e01;
+      case 313: return e01;
+      case 315: return statements1;
+      case 318: return cases1;
+      case 322: return e01;
       case 325: return statements1;
-      case 331: return e01;
-      case 333: return statements1;
+      case 326: return cases1;
+      case 330: return e01;
+      case 332: return statements1;
+      case 333: return cases1;
       case 337: return e01;
       case 339: return statements1;
+      case 345: return e01;
+      case 348: return statements1;
+      case 352: return e01;
+      case 354: return statements1;
       default: Util.fatal("getAttributes: unknown node " + nodeNumber + ". Probable out-of-date ARTGeneratedActions - regenerate and recompile"); return null;
       }
     }
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 282: interpret(statements1); break;
-      case 287: interpret(statements1); break;
-      case 294: interpret(statements1); break;
-      case 303: if (switchVal == e01.v && CheckContinues == false){interpret(statements1);} else if (switchVal == e01.v && CheckContinues == true) {interpret(statements1);CheckContinues=false;} else {interpret(cases1);} break;
-      case 310: if (switchVal == e01.v) {interpret(statements1);  CheckContinues= true; interpret(cases1);} else {interpret(cases1);} break;
-      case 319: if (switchVal == e01.v) {interpret(statements1);  CheckContinues= true; interpret(cases1);} else {interpret(cases1);} break;
-      case 327: if (switchVal == e01.v || CheckContinues == true) {interpret(statements1);} break;
-      case 333: if (switchVal == e01.v || CheckContinues == true) {interpret(statements1);} break;
-      case 341: if (switchVal == e01.v || CheckContinues == true) {interpret(statements1);} break;
+      case 298: { interpret(statements1); }  break;
+      case 304: { interpret(statements1); }  break;
+      case 309: { interpret(statements1); }  break;
+      case 318: { int caseVal = toInt(e01.v);
+       if (switchVal == caseVal && !CheckContinues) { 
+         interpret(statements1); 
+       } else if (switchVal == caseVal && CheckContinues) { 
+         interpret(statements1); 
+         CheckContinues = false; 
+       } else { 
+         interpret(cases1); 
+       }
+     }  break;
+      case 326: { int caseVal = toInt(e01.v);
+       if (switchVal == caseVal && !CheckContinues) { 
+         interpret(statements1); 
+       } else if (switchVal == caseVal && CheckContinues) { 
+         interpret(statements1); 
+         CheckContinues = false; 
+       } else { 
+         interpret(cases1); 
+       }
+     }  break;
+      case 333: { int caseVal = toInt(e01.v);
+       if (switchVal == caseVal) { 
+         interpret(statements1); 
+         CheckContinues = true; 
+         interpret(cases1); 
+       } else { 
+         interpret(cases1); 
+       }
+     }  break;
+      case 341: { int caseVal = toInt(e01.v);
+       if (switchVal == caseVal || CheckContinues) { 
+         interpret(statements1); 
+       }
+     }  break;
+      case 348: { int caseVal = toInt(e01.v);
+       if (switchVal == caseVal || CheckContinues) { 
+         interpret(statements1); 
+       }
+     }  break;
+      case 354: { int caseVal = toInt(e01.v);
+       if (switchVal == caseVal || CheckContinues) { 
+         interpret(statements1); 
+       }
+     }  break;
       }
     }
   }
 
   public class ART_C_e0 extends AbstractAttributeBlock {
-    ART_C_e0 e0 = this; int v; ART_C_e0 e01; ART_C_e0 e02; ART_C_e1 e11; ART_C_e1 e12;
+    ART_C_e0 e0 = this; Object v; ART_C_e0 e01; ART_C_e0 e02; ART_C_e1 e11; ART_C_e1 e12;
 
     public void initRHSAttributeBlock(int nodeNumber, int term) {
       switch(nodeNumber){
-      case 345: e11 = new ART_C_e1(); e11.term = term; break;
-      case 348: e11 = new ART_C_e1(); e11.term = term; break;
-      case 350: e12 = new ART_C_e1(); e12.term = term; break;
-      case 353: e11 = new ART_C_e1(); e11.term = term; break;
-      case 355: e12 = new ART_C_e1(); e12.term = term; break;
       case 358: e11 = new ART_C_e1(); e11.term = term; break;
-      case 360: e12 = new ART_C_e1(); e12.term = term; break;
-      case 363: e11 = new ART_C_e1(); e11.term = term; break;
-      case 365: e12 = new ART_C_e1(); e12.term = term; break;
-      case 368: e11 = new ART_C_e1(); e11.term = term; break;
-      case 370: e12 = new ART_C_e1(); e12.term = term; break;
-      case 373: e11 = new ART_C_e1(); e11.term = term; break;
-      case 375: e12 = new ART_C_e1(); e12.term = term; break;
-      case 378: e01 = new ART_C_e0(); e01.term = term; break;
-      case 380: e02 = new ART_C_e0(); e02.term = term; break;
-      case 383: e01 = new ART_C_e0(); e01.term = term; break;
-      case 385: e02 = new ART_C_e0(); e02.term = term; break;
-      case 388: e01 = new ART_C_e0(); e01.term = term; break;
-      case 390: e02 = new ART_C_e0(); e02.term = term; break;
-      case 393: e01 = new ART_C_e0(); e01.term = term; break;
-      case 395: e02 = new ART_C_e0(); e02.term = term; break;
-      case 398: e01 = new ART_C_e0(); e01.term = term; break;
-      case 400: e02 = new ART_C_e0(); e02.term = term; break;
+      case 361: e11 = new ART_C_e1(); e11.term = term; break;
+      case 363: e12 = new ART_C_e1(); e12.term = term; break;
+      case 366: e11 = new ART_C_e1(); e11.term = term; break;
+      case 368: e12 = new ART_C_e1(); e12.term = term; break;
+      case 371: e11 = new ART_C_e1(); e11.term = term; break;
+      case 373: e12 = new ART_C_e1(); e12.term = term; break;
+      case 376: e11 = new ART_C_e1(); e11.term = term; break;
+      case 378: e12 = new ART_C_e1(); e12.term = term; break;
+      case 381: e11 = new ART_C_e1(); e11.term = term; break;
+      case 383: e12 = new ART_C_e1(); e12.term = term; break;
+      case 386: e11 = new ART_C_e1(); e11.term = term; break;
+      case 388: e12 = new ART_C_e1(); e12.term = term; break;
+      case 391: e01 = new ART_C_e0(); e01.term = term; break;
+      case 393: e02 = new ART_C_e0(); e02.term = term; break;
+      case 396: e01 = new ART_C_e0(); e01.term = term; break;
+      case 398: e02 = new ART_C_e0(); e02.term = term; break;
+      case 401: e01 = new ART_C_e0(); e01.term = term; break;
+      case 403: e02 = new ART_C_e0(); e02.term = term; break;
+      case 406: e01 = new ART_C_e0(); e01.term = term; break;
+      case 408: e02 = new ART_C_e0(); e02.term = term; break;
+      case 411: e01 = new ART_C_e0(); e01.term = term; break;
+      case 413: e02 = new ART_C_e0(); e02.term = term; break;
       }
     }
 
     public AbstractAttributeBlock getAttributes(int nodeNumber) {
       switch(nodeNumber){
-      case 345: return e11;
-      case 348: return e11;
-      case 350: return e12;
-      case 353: return e11;
-      case 355: return e12;
       case 358: return e11;
-      case 360: return e12;
-      case 363: return e11;
-      case 365: return e12;
-      case 368: return e11;
-      case 370: return e12;
-      case 373: return e11;
-      case 375: return e12;
-      case 378: return e01;
-      case 380: return e02;
-      case 383: return e01;
-      case 385: return e02;
-      case 388: return e01;
-      case 390: return e02;
-      case 393: return e01;
-      case 395: return e02;
-      case 398: return e01;
-      case 400: return e02;
+      case 361: return e11;
+      case 363: return e12;
+      case 366: return e11;
+      case 368: return e12;
+      case 371: return e11;
+      case 373: return e12;
+      case 376: return e11;
+      case 378: return e12;
+      case 381: return e11;
+      case 383: return e12;
+      case 386: return e11;
+      case 388: return e12;
+      case 391: return e01;
+      case 393: return e02;
+      case 396: return e01;
+      case 398: return e02;
+      case 401: return e01;
+      case 403: return e02;
+      case 406: return e01;
+      case 408: return e02;
+      case 411: return e01;
+      case 413: return e02;
       default: Util.fatal("getAttributes: unknown node " + nodeNumber + ". Probable out-of-date ARTGeneratedActions - regenerate and recompile"); return null;
       }
     }
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 345: e0.v = e11.v;  break;
-      case 350: e0.v = e11.v >  e12.v ? 1 : 0;  break;
-      case 355: e0.v = e11.v <  e12.v ? 1 : 0;  break;
-      case 360: e0.v = e11.v >= e12.v ? 1 : 0;  break;
-      case 365: e0.v = e11.v <= e12.v ? 1 : 0;  break;
-      case 370: e0.v = e11.v == e12.v ? 1 : 0;  break;
-      case 375: e0.v = e11.v != e12.v ? 1 : 0;  break;
-      case 380: e0.v = (e01.v != 0) && (e02.v != 0) ? 1 : 0;  break;
-      case 385: e0.v = (e01.v != 0) || (e02.v != 0) ? 1 : 0;  break;
-      case 390: e0.v = (e01.v != 0) && (e02.v != 0) ? 1 : 0;  break;
-      case 395: e0.v = (e01.v != 0) || (e02.v != 0) ? 1 : 0;  break;
-      case 400: e0.v = (e01.v != 0) ^ (e02.v != 0) ? 1 : 0;  break;
+      case 358: { e0.v = e11.v; }  break;
+      case 363: { e0.v = compare(e11.v, e12.v, ">"); }  break;
+      case 368: { e0.v = compare(e11.v, e12.v, "<"); }  break;
+      case 373: { e0.v = compare(e11.v, e12.v, ">="); }  break;
+      case 378: { e0.v = compare(e11.v, e12.v, "<="); }  break;
+      case 383: { e0.v = compare(e11.v, e12.v, "=="); }  break;
+      case 388: { e0.v = compare(e11.v, e12.v, "!="); }  break;
+      case 393: { e0.v = toBoolean(e01.v) && toBoolean(e02.v); }  break;
+      case 398: { e0.v = toBoolean(e01.v) || toBoolean(e02.v); }  break;
+      case 403: { e0.v = toBoolean(e01.v) && toBoolean(e02.v); }  break;
+      case 408: { e0.v = toBoolean(e01.v) || toBoolean(e02.v); }  break;
+      case 413: { e0.v = toBoolean(e01.v) ^ toBoolean(e02.v); }  break;
       }
     }
   }
 
   public class ART_C_e1 extends AbstractAttributeBlock {
-    ART_C_e1 e1 = this; int v; ART_C_e1 e11; ART_C_e2 e21;
+    ART_C_e1 e1 = this; Object v; ART_C_e1 e11; ART_C_e2 e21;
 
     public void initRHSAttributeBlock(int nodeNumber, int term) {
       switch(nodeNumber){
-      case 404: e21 = new ART_C_e2(); e21.term = term; break;
-      case 407: e11 = new ART_C_e1(); e11.term = term; break;
-      case 409: e21 = new ART_C_e2(); e21.term = term; break;
-      case 412: e11 = new ART_C_e1(); e11.term = term; break;
-      case 414: e21 = new ART_C_e2(); e21.term = term; break;
+      case 417: e21 = new ART_C_e2(); e21.term = term; break;
+      case 420: e11 = new ART_C_e1(); e11.term = term; break;
+      case 422: e21 = new ART_C_e2(); e21.term = term; break;
+      case 425: e11 = new ART_C_e1(); e11.term = term; break;
+      case 427: e21 = new ART_C_e2(); e21.term = term; break;
       }
     }
 
     public AbstractAttributeBlock getAttributes(int nodeNumber) {
       switch(nodeNumber){
-      case 404: return e21;
-      case 407: return e11;
-      case 409: return e21;
-      case 412: return e11;
-      case 414: return e21;
+      case 417: return e21;
+      case 420: return e11;
+      case 422: return e21;
+      case 425: return e11;
+      case 427: return e21;
       default: Util.fatal("getAttributes: unknown node " + nodeNumber + ". Probable out-of-date ARTGeneratedActions - regenerate and recompile"); return null;
       }
     }
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 404: e1.v = e21.v;  break;
-      case 409: e1.v = e11.v + e21.v;  break;
-      case 414: e1.v = e11.v - e21.v;  break;
+      case 417: { e1.v = e21.v; }  break;
+      case 422: { e1.v = arithmeticOp(e11.v, e21.v, "+"); }  break;
+      case 427: { e1.v = arithmeticOp(e11.v, e21.v, "-"); }  break;
       }
     }
   }
 
   public class ART_C_e2 extends AbstractAttributeBlock {
-    ART_C_e2 e2 = this; int v; ART_C_e2 e21; ART_C_e3 e31;
+    ART_C_e2 e2 = this; Object v; ART_C_e2 e21; ART_C_e3 e31;
 
     public void initRHSAttributeBlock(int nodeNumber, int term) {
       switch(nodeNumber){
-      case 418: e31 = new ART_C_e3(); e31.term = term; break;
-      case 421: e21 = new ART_C_e2(); e21.term = term; break;
-      case 423: e31 = new ART_C_e3(); e31.term = term; break;
-      case 426: e21 = new ART_C_e2(); e21.term = term; break;
-      case 428: e31 = new ART_C_e3(); e31.term = term; break;
-      case 431: e21 = new ART_C_e2(); e21.term = term; break;
-      case 433: e31 = new ART_C_e3(); e31.term = term; break;
+      case 431: e31 = new ART_C_e3(); e31.term = term; break;
+      case 434: e21 = new ART_C_e2(); e21.term = term; break;
+      case 436: e31 = new ART_C_e3(); e31.term = term; break;
+      case 439: e21 = new ART_C_e2(); e21.term = term; break;
+      case 441: e31 = new ART_C_e3(); e31.term = term; break;
+      case 444: e21 = new ART_C_e2(); e21.term = term; break;
+      case 446: e31 = new ART_C_e3(); e31.term = term; break;
       }
     }
 
     public AbstractAttributeBlock getAttributes(int nodeNumber) {
       switch(nodeNumber){
-      case 418: return e31;
-      case 421: return e21;
-      case 423: return e31;
-      case 426: return e21;
-      case 428: return e31;
-      case 431: return e21;
-      case 433: return e31;
+      case 431: return e31;
+      case 434: return e21;
+      case 436: return e31;
+      case 439: return e21;
+      case 441: return e31;
+      case 444: return e21;
+      case 446: return e31;
       default: Util.fatal("getAttributes: unknown node " + nodeNumber + ". Probable out-of-date ARTGeneratedActions - regenerate and recompile"); return null;
       }
     }
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 418: e2.v = e31.v;  break;
-      case 423: e2.v = e21.v * e31.v;  break;
-      case 428: e2.v = e21.v / e31.v;  break;
-      case 433: e2.v = e21.v % e31.v;  break;
+      case 431: { e2.v = e31.v; }  break;
+      case 436: { e2.v = arithmeticOp(e21.v, e31.v, "*"); }  break;
+      case 441: { e2.v = arithmeticOp(e21.v, e31.v, "/"); }  break;
+      case 446: { e2.v = arithmeticOp(e21.v, e31.v, "%"); }  break;
       }
     }
   }
 
   public class ART_C_e3 extends AbstractAttributeBlock {
-    ART_C_e3 e3 = this; int v; ART_C_e3 e31; ART_C_e4 e41;
+    ART_C_e3 e3 = this; Object v; ART_C_e3 e31; ART_C_e4 e41;
 
     public void initRHSAttributeBlock(int nodeNumber, int term) {
       switch(nodeNumber){
-      case 437: e41 = new ART_C_e4(); e41.term = term; break;
-      case 441: e31 = new ART_C_e3(); e31.term = term; break;
-      case 445: e31 = new ART_C_e3(); e31.term = term; break;
-      case 449: e31 = new ART_C_e3(); e31.term = term; break;
+      case 450: e41 = new ART_C_e4(); e41.term = term; break;
+      case 454: e31 = new ART_C_e3(); e31.term = term; break;
+      case 458: e31 = new ART_C_e3(); e31.term = term; break;
+      case 462: e31 = new ART_C_e3(); e31.term = term; break;
       }
     }
 
     public AbstractAttributeBlock getAttributes(int nodeNumber) {
       switch(nodeNumber){
-      case 437: return e41;
-      case 441: return e31;
-      case 445: return e31;
-      case 449: return e31;
+      case 450: return e41;
+      case 454: return e31;
+      case 458: return e31;
+      case 462: return e31;
       default: Util.fatal("getAttributes: unknown node " + nodeNumber + ". Probable out-of-date ARTGeneratedActions - regenerate and recompile"); return null;
       }
     }
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 437: e3.v = e41.v;  break;
-      case 441: e3.v = e31.v;  break;
-      case 445: e3.v = -e31.v;  break;
-      case 449: e3.v = e31.v == 0 ? 1 : 0;  break;
+      case 450: { e3.v = e41.v; }  break;
+      case 454: { e3.v = e31.v; }  break;
+      case 458: { e3.v = negate(e31.v); }  break;
+      case 462: { e3.v = logicalNot(e31.v); }  break;
       }
     }
   }
 
   public class ART_C_e4 extends AbstractAttributeBlock {
-    ART_C_e4 e4 = this; int v; ART_C_e5 e51; ART_C_e4 e41;
+    ART_C_e4 e4 = this; Object v; ART_C_e5 e51; ART_C_e4 e41;
 
     public void initRHSAttributeBlock(int nodeNumber, int term) {
       switch(nodeNumber){
-      case 453: e51 = new ART_C_e5(); e51.term = term; break;
-      case 456: e51 = new ART_C_e5(); e51.term = term; break;
-      case 458: e41 = new ART_C_e4(); e41.term = term; break;
+      case 466: e51 = new ART_C_e5(); e51.term = term; break;
+      case 469: e51 = new ART_C_e5(); e51.term = term; break;
+      case 471: e41 = new ART_C_e4(); e41.term = term; break;
       }
     }
 
     public AbstractAttributeBlock getAttributes(int nodeNumber) {
       switch(nodeNumber){
-      case 453: return e51;
-      case 456: return e51;
-      case 458: return e41;
+      case 466: return e51;
+      case 469: return e51;
+      case 471: return e41;
       default: Util.fatal("getAttributes: unknown node " + nodeNumber + ". Probable out-of-date ARTGeneratedActions - regenerate and recompile"); return null;
       }
     }
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 453: e4.v = e51.v;  break;
-      case 458: e4.v = (int) Math.pow(e51.v, e41.v);  break;
+      case 466: { e4.v = e51.v; }  break;
+      case 471: { 
+    double v1 = toDouble(e51.v);
+    double v2 = toDouble(e41.v);
+    e4.v = Math.pow(v1, v2);
+  }  break;
       }
     }
   }
 
   public class ART_C_e5 extends AbstractAttributeBlock {
-    ART_C_e5 e5 = this; int v; ART_C_e6 e61; ART_C_ID ID1;
+    ART_C_e5 e5 = this; Object v; ART_C_e6 e61; ART_C_ID ID1;
 
     public void initRHSAttributeBlock(int nodeNumber, int term) {
       switch(nodeNumber){
-      case 462: e61 = new ART_C_e6(); e61.term = term; break;
-      case 465: ID1 = new ART_C_ID(); ID1.term = term; break;
-      case 469: ID1 = new ART_C_ID(); ID1.term = term; break;
-      }
-    }
-
-    public AbstractAttributeBlock getAttributes(int nodeNumber) {
-      switch(nodeNumber){
-      case 462: return e61;
-      case 465: return ID1;
-      case 469: return ID1;
-      default: Util.fatal("getAttributes: unknown node " + nodeNumber + ". Probable out-of-date ARTGeneratedActions - regenerate and recompile"); return null;
-      }
-    }
-
-    public void action(int nodeNumber) {
-      switch(nodeNumber){
-      case 462: e5.v = e61.v;  break;
-      case 466: e5.v = variables.get(ID1.v); variables.put(ID1.v, e5.v + 1);  break;
-      case 470: e5.v = variables.get(ID1.v); variables.put(ID1.v, e5.v - 1);  break;
-      }
-    }
-  }
-
-  public class ART_C_e6 extends AbstractAttributeBlock {
-    ART_C_e6 e6 = this; int v; ART_C_e7 e71; ART_C_ID ID1;
-
-    public void initRHSAttributeBlock(int nodeNumber, int term) {
-      switch(nodeNumber){
-      case 474: e71 = new ART_C_e7(); e71.term = term; break;
+      case 475: e61 = new ART_C_e6(); e61.term = term; break;
       case 478: ID1 = new ART_C_ID(); ID1.term = term; break;
       case 482: ID1 = new ART_C_ID(); ID1.term = term; break;
       }
@@ -413,7 +568,7 @@ public class ARTGeneratedActions extends AbstractActions {
 
     public AbstractAttributeBlock getAttributes(int nodeNumber) {
       switch(nodeNumber){
-      case 474: return e71;
+      case 475: return e61;
       case 478: return ID1;
       case 482: return ID1;
       default: Util.fatal("getAttributes: unknown node " + nodeNumber + ". Probable out-of-date ARTGeneratedActions - regenerate and recompile"); return null;
@@ -422,56 +577,127 @@ public class ARTGeneratedActions extends AbstractActions {
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 474: e6.v = e71.v;  break;
-      case 478: int puppet = variables.get(ID1.v) + 1; variables.put(ID1.v,puppet); e6.v = puppet;   break;
-      case 482: puppet = variables.get(ID1.v) - 1; variables.put(ID1.v,puppet); e6.v = puppet ;   break;
+      case 475: { e5.v = e61.v; }  break;
+      case 479: { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    e5.v = v;
+    variables.put(ID1.v, increment(v));
+  }  break;
+      case 483: { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    e5.v = v;
+    variables.put(ID1.v, decrement(v));
+  }  break;
       }
     }
   }
 
-  public class ART_C_e7 extends AbstractAttributeBlock {
-    ART_C_e7 e7 = this; int v; ART_C_ID ID1; ART_C_e0 e01; ART_C_e1 e11; ART_C_STRING_SQ STRING_SQ1; ART_C_INTEGER INTEGER1;
+  public class ART_C_e6 extends AbstractAttributeBlock {
+    ART_C_e6 e6 = this; Object v; ART_C_e7 e71; ART_C_ID ID1;
 
     public void initRHSAttributeBlock(int nodeNumber, int term) {
       switch(nodeNumber){
-      case 486: INTEGER1 = new ART_C_INTEGER(); INTEGER1.term = term; break;
-      case 489: ID1 = new ART_C_ID(); ID1.term = term; break;
-      case 493: e11 = new ART_C_e1(); e11.term = term; break;
-      case 499: e01 = new ART_C_e0(); e01.term = term; break;
-      case 505: e01 = new ART_C_e0(); e01.term = term; break;
-      case 511: e01 = new ART_C_e0(); e01.term = term; break;
-      case 517: e01 = new ART_C_e0(); e01.term = term; break;
-      case 528: STRING_SQ1 = new ART_C_STRING_SQ(); STRING_SQ1.term = term; break;
-      case 530: e01 = new ART_C_e0(); e01.term = term; break;
+      case 487: e71 = new ART_C_e7(); e71.term = term; break;
+      case 491: ID1 = new ART_C_ID(); ID1.term = term; break;
+      case 495: ID1 = new ART_C_ID(); ID1.term = term; break;
       }
     }
 
     public AbstractAttributeBlock getAttributes(int nodeNumber) {
       switch(nodeNumber){
-      case 486: return INTEGER1;
-      case 489: return ID1;
-      case 493: return e11;
-      case 499: return e01;
-      case 505: return e01;
-      case 511: return e01;
-      case 517: return e01;
-      case 528: return STRING_SQ1;
-      case 530: return e01;
+      case 487: return e71;
+      case 491: return ID1;
+      case 495: return ID1;
       default: Util.fatal("getAttributes: unknown node " + nodeNumber + ". Probable out-of-date ARTGeneratedActions - regenerate and recompile"); return null;
       }
     }
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 486: e7.v = INTEGER1.v;  break;
-      case 489: e7.v = variables.getOrDefault(ID1.v, 0);  break;
-      case 494: e7.v = e11.v;  break;
-      case 500: e7.v = (int) Math.sqrt(e01.v);  break;
-      case 506: e7.v = (int) (Math.sin(e01.v) * 1000);  break;
-      case 512: e7.v = (int) (Math.cos(e01.v) * 1000);  break;
-      case 518: e7.v = Math.abs(e01.v);  break;
-      case 523: System.out.print("Input: "); e7.v = Integer.parseInt(System.console().readLine());  break;
-      case 531: e7.v = (int) plugin(STRING_SQ1.v, e01.v);  break;
+      case 487: { e6.v = e71.v; }  break;
+      case 491: { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    Object newV = increment(v);
+    variables.put(ID1.v, newV);
+    e6.v = newV;
+  }  break;
+      case 495: { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    Object newV = decrement(v);
+    variables.put(ID1.v, newV);
+    e6.v = newV;
+  }  break;
+      }
+    }
+  }
+
+  public class ART_C_e7 extends AbstractAttributeBlock {
+    ART_C_e7 e7 = this; Object v; ART_C_REAL REAL1; ART_C_ID ID1; ART_C_e0 e01; ART_C_e1 e11; ART_C_STRING_SQ STRING_SQ1; ART_C_BOOLEAN BOOLEAN1; ART_C_INTEGER INTEGER1;
+
+    public void initRHSAttributeBlock(int nodeNumber, int term) {
+      switch(nodeNumber){
+      case 499: INTEGER1 = new ART_C_INTEGER(); INTEGER1.term = term; break;
+      case 502: REAL1 = new ART_C_REAL(); REAL1.term = term; break;
+      case 505: BOOLEAN1 = new ART_C_BOOLEAN(); BOOLEAN1.term = term; break;
+      case 508: ID1 = new ART_C_ID(); ID1.term = term; break;
+      case 512: e11 = new ART_C_e1(); e11.term = term; break;
+      case 518: e01 = new ART_C_e0(); e01.term = term; break;
+      case 524: e01 = new ART_C_e0(); e01.term = term; break;
+      case 530: e01 = new ART_C_e0(); e01.term = term; break;
+      case 536: e01 = new ART_C_e0(); e01.term = term; break;
+      case 547: STRING_SQ1 = new ART_C_STRING_SQ(); STRING_SQ1.term = term; break;
+      case 549: e01 = new ART_C_e0(); e01.term = term; break;
+      }
+    }
+
+    public AbstractAttributeBlock getAttributes(int nodeNumber) {
+      switch(nodeNumber){
+      case 499: return INTEGER1;
+      case 502: return REAL1;
+      case 505: return BOOLEAN1;
+      case 508: return ID1;
+      case 512: return e11;
+      case 518: return e01;
+      case 524: return e01;
+      case 530: return e01;
+      case 536: return e01;
+      case 547: return STRING_SQ1;
+      case 549: return e01;
+      default: Util.fatal("getAttributes: unknown node " + nodeNumber + ". Probable out-of-date ARTGeneratedActions - regenerate and recompile"); return null;
+      }
+    }
+
+    public void action(int nodeNumber) {
+      switch(nodeNumber){
+      case 499: { e7.v = INTEGER1.v; }  break;
+      case 502: { e7.v = REAL1.v; }  break;
+      case 505: { e7.v = BOOLEAN1.v; }  break;
+      case 508: { e7.v = variables.getOrDefault(ID1.v, 0); }  break;
+      case 513: { e7.v = e11.v; }  break;
+      case 519: { e7.v = Math.sqrt(toDouble(e01.v)); }  break;
+      case 525: { e7.v = Math.sin(toDouble(e01.v)); }  break;
+      case 531: { e7.v = Math.cos(toDouble(e01.v)); }  break;
+      case 537: { 
+    if (e01.v instanceof Integer) {
+      e7.v = Math.abs((Integer)e01.v);
+    } else if (e01.v instanceof Double) {
+      e7.v = Math.abs((Double)e01.v);
+    }
+  }  break;
+      case 542: { 
+    System.out.print("Input: "); 
+    String input = System.console().readLine();
+    try {
+      e7.v = Integer.parseInt(input);
+    } catch (NumberFormatException e) {
+      try {
+        e7.v = Double.parseDouble(input);
+      } catch (NumberFormatException ex) {
+        e7.v = input.equals("true") ? true : (input.equals("false") ? false : 0);
+      }
+    }
+  }  break;
+      case 550: { e7.v = plugin(STRING_SQ1.v, e01.v); }  break;
       }
     }
   }
@@ -481,26 +707,31 @@ public class ARTGeneratedActions extends AbstractActions {
 
     public void initRHSAttributeBlock(int nodeNumber, int term) {
       switch(nodeNumber){
-      case 536: e01 = new ART_C_e0(); e01.term = term; break;
-      case 538: statements1 = new ART_C_statements(); statements1.term = term; break;
-      case 539: elseOpt1 = new ART_C_elseOpt(); elseOpt1.term = term; break;
-      case 543: statement1 = new ART_C_statement(); statement1.term = term; break;
+      case 555: e01 = new ART_C_e0(); e01.term = term; break;
+      case 557: statements1 = new ART_C_statements(); statements1.term = term; break;
+      case 558: elseOpt1 = new ART_C_elseOpt(); elseOpt1.term = term; break;
+      case 562: statement1 = new ART_C_statement(); statement1.term = term; break;
       }
     }
 
     public AbstractAttributeBlock getAttributes(int nodeNumber) {
       switch(nodeNumber){
-      case 536: return e01;
-      case 538: return statements1;
-      case 539: return elseOpt1;
-      case 543: return statement1;
+      case 555: return e01;
+      case 557: return statements1;
+      case 558: return elseOpt1;
+      case 562: return statement1;
       default: Util.fatal("getAttributes: unknown node " + nodeNumber + ". Probable out-of-date ARTGeneratedActions - regenerate and recompile"); return null;
       }
     }
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 539: if (e01.v != 0) {interpret(statements1);} else{ interpret(elseOpt1);}  break;
+      case 558: { if (toBoolean(e01.v)) { 
+         interpret(statements1); 
+       } else { 
+         interpret(elseOpt1); 
+       }
+     }  break;
       }
     }
   }
@@ -510,21 +741,21 @@ public class ARTGeneratedActions extends AbstractActions {
 
     public void initRHSAttributeBlock(int nodeNumber, int term) {
       switch(nodeNumber){
-      case 550: statements1 = new ART_C_statements(); statements1.term = term; break;
+      case 569: statements1 = new ART_C_statements(); statements1.term = term; break;
       }
     }
 
     public AbstractAttributeBlock getAttributes(int nodeNumber) {
       switch(nodeNumber){
-      case 550: return statements1;
+      case 569: return statements1;
       default: Util.fatal("getAttributes: unknown node " + nodeNumber + ". Probable out-of-date ARTGeneratedActions - regenerate and recompile"); return null;
       }
     }
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 549:variables.clear();  break;
-      case 550: System.out.println("Tests completed: " + successCount + " successes, " + failCount + " failures");  break;
+      case 568: { variables.clear(); }  break;
+      case 569: { System.out.println("Tests completed: " + successCount + " successes, " + failCount + " failures"); }  break;
       }
     }
   }
@@ -534,33 +765,33 @@ public class ARTGeneratedActions extends AbstractActions {
 
     public void initRHSAttributeBlock(int nodeNumber, int term) {
       switch(nodeNumber){
-      case 554: STRING_SQ1 = new ART_C_STRING_SQ(); STRING_SQ1.term = term; break;
-      case 557: STRING_SQ1 = new ART_C_STRING_SQ(); STRING_SQ1.term = term; break;
-      case 559: printElements1 = new ART_C_printElements(); printElements1.term = term; break;
-      case 562: e01 = new ART_C_e0(); e01.term = term; break;
-      case 565: e01 = new ART_C_e0(); e01.term = term; break;
-      case 567: printElements1 = new ART_C_printElements(); printElements1.term = term; break;
+      case 573: STRING_SQ1 = new ART_C_STRING_SQ(); STRING_SQ1.term = term; break;
+      case 576: STRING_SQ1 = new ART_C_STRING_SQ(); STRING_SQ1.term = term; break;
+      case 578: printElements1 = new ART_C_printElements(); printElements1.term = term; break;
+      case 581: e01 = new ART_C_e0(); e01.term = term; break;
+      case 584: e01 = new ART_C_e0(); e01.term = term; break;
+      case 586: printElements1 = new ART_C_printElements(); printElements1.term = term; break;
       }
     }
 
     public AbstractAttributeBlock getAttributes(int nodeNumber) {
       switch(nodeNumber){
-      case 554: return STRING_SQ1;
-      case 557: return STRING_SQ1;
-      case 559: return printElements1;
-      case 562: return e01;
-      case 565: return e01;
-      case 567: return printElements1;
+      case 573: return STRING_SQ1;
+      case 576: return STRING_SQ1;
+      case 578: return printElements1;
+      case 581: return e01;
+      case 584: return e01;
+      case 586: return printElements1;
       default: Util.fatal("getAttributes: unknown node " + nodeNumber + ". Probable out-of-date ARTGeneratedActions - regenerate and recompile"); return null;
       }
     }
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 554: System.out.print(STRING_SQ1.v);  break;
-      case 557: System.out.print(STRING_SQ1.v);  break;
-      case 562: System.out.print(e01.v);  break;
-      case 565: System.out.print(e01.v);  break;
+      case 573: { System.out.print(STRING_SQ1.v); }  break;
+      case 576: { System.out.print(STRING_SQ1.v); }  break;
+      case 581: { System.out.print(e01.v); }  break;
+      case 584: { System.out.print(e01.v); }  break;
       }
     }
   }
@@ -570,152 +801,185 @@ public class ARTGeneratedActions extends AbstractActions {
 
     public void initRHSAttributeBlock(int nodeNumber, int term) {
       switch(nodeNumber){
-      case 571: ID1 = new ART_C_ID(); ID1.term = term; break;
-      case 573: e01 = new ART_C_e0(); e01.term = term; break;
-      case 577: ID1 = new ART_C_ID(); ID1.term = term; break;
-      case 579: e01 = new ART_C_e0(); e01.term = term; break;
-      case 583: ID1 = new ART_C_ID(); ID1.term = term; break;
-      case 585: e01 = new ART_C_e0(); e01.term = term; break;
-      case 589: ID1 = new ART_C_ID(); ID1.term = term; break;
-      case 591: e01 = new ART_C_e0(); e01.term = term; break;
-      case 595: ID1 = new ART_C_ID(); ID1.term = term; break;
-      case 597: e01 = new ART_C_e0(); e01.term = term; break;
-      case 601: ID1 = new ART_C_ID(); ID1.term = term; break;
-      case 603: e01 = new ART_C_e0(); e01.term = term; break;
-      case 609: statements1 = new ART_C_statements(); statements1.term = term; break;
-      case 612: ID1 = new ART_C_ID(); ID1.term = term; break;
-      case 614: statements2 = new ART_C_statements(); statements2.term = term; break;
-      case 620: e01 = new ART_C_e0(); e01.term = term; break;
-      case 622: statements1 = new ART_C_statements(); statements1.term = term; break;
-      case 623: elseOpt1 = new ART_C_elseOpt(); elseOpt1.term = term; break;
-      case 627: e01 = new ART_C_e0(); e01.term = term; break;
-      case 629: statements1 = new ART_C_statements(); statements1.term = term; break;
-      case 635: ID1 = new ART_C_ID(); ID1.term = term; break;
-      case 637: e01 = new ART_C_e0(); e01.term = term; break;
-      case 639: e02 = new ART_C_e0(); e02.term = term; break;
-      case 641: statement1 = new ART_C_statement(); statement1.term = term; break;
-      case 643: statements1 = new ART_C_statements(); statements1.term = term; break;
-      case 650: e01 = new ART_C_e0(); e01.term = term; break;
-      case 653: cases1 = new ART_C_cases(); cases1.term = term; break;
-      case 660: printElements1 = new ART_C_printElements(); printElements1.term = term; break;
-      case 666: ID1 = new ART_C_ID(); ID1.term = term; break;
-      case 667: statement1 = new ART_C_statement(); statement1.term = term; break;
-      case 671: ID1 = new ART_C_ID(); ID1.term = term; break;
-      case 676: statement1 = new ART_C_statement(); statement1.term = term; break;
-      case 682: STRING_SQ1 = new ART_C_STRING_SQ(); STRING_SQ1.term = term; break;
-      case 689: STRING_SQ1 = new ART_C_STRING_SQ(); STRING_SQ1.term = term; break;
-      case 691: e01 = new ART_C_e0(); e01.term = term; break;
-      case 698: STRING_SQ1 = new ART_C_STRING_SQ(); STRING_SQ1.term = term; break;
-      case 700: e01 = new ART_C_e0(); e01.term = term; break;
-      case 702: e02 = new ART_C_e0(); e02.term = term; break;
-      case 709: STRING_SQ1 = new ART_C_STRING_SQ(); STRING_SQ1.term = term; break;
-      case 711: e01 = new ART_C_e0(); e01.term = term; break;
-      case 713: e02 = new ART_C_e0(); e02.term = term; break;
-      case 715: e03 = new ART_C_e0(); e03.term = term; break;
-      case 725: STRING_SQ1 = new ART_C_STRING_SQ(); STRING_SQ1.term = term; break;
-      case 734: e01 = new ART_C_e0(); e01.term = term; break;
-      case 739: e01 = new ART_C_e0(); e01.term = term; break;
-      case 744: e01 = new ART_C_e0(); e01.term = term; break;
-      case 757: e01 = new ART_C_e0(); e01.term = term; break;
-      case 767: e01 = new ART_C_e0(); e01.term = term; break;
-      case 769: e02 = new ART_C_e0(); e02.term = term; break;
+      case 590: ID1 = new ART_C_ID(); ID1.term = term; break;
+      case 592: e01 = new ART_C_e0(); e01.term = term; break;
+      case 596: ID1 = new ART_C_ID(); ID1.term = term; break;
+      case 598: e01 = new ART_C_e0(); e01.term = term; break;
+      case 602: ID1 = new ART_C_ID(); ID1.term = term; break;
+      case 604: e01 = new ART_C_e0(); e01.term = term; break;
+      case 608: ID1 = new ART_C_ID(); ID1.term = term; break;
+      case 610: e01 = new ART_C_e0(); e01.term = term; break;
+      case 614: ID1 = new ART_C_ID(); ID1.term = term; break;
+      case 616: e01 = new ART_C_e0(); e01.term = term; break;
+      case 620: ID1 = new ART_C_ID(); ID1.term = term; break;
+      case 622: e01 = new ART_C_e0(); e01.term = term; break;
+      case 628: statements1 = new ART_C_statements(); statements1.term = term; break;
+      case 631: ID1 = new ART_C_ID(); ID1.term = term; break;
+      case 633: statements2 = new ART_C_statements(); statements2.term = term; break;
+      case 639: e01 = new ART_C_e0(); e01.term = term; break;
+      case 641: statements1 = new ART_C_statements(); statements1.term = term; break;
+      case 642: elseOpt1 = new ART_C_elseOpt(); elseOpt1.term = term; break;
+      case 646: e01 = new ART_C_e0(); e01.term = term; break;
+      case 648: statements1 = new ART_C_statements(); statements1.term = term; break;
+      case 654: ID1 = new ART_C_ID(); ID1.term = term; break;
+      case 656: e01 = new ART_C_e0(); e01.term = term; break;
+      case 658: e02 = new ART_C_e0(); e02.term = term; break;
+      case 660: statement1 = new ART_C_statement(); statement1.term = term; break;
+      case 662: statements1 = new ART_C_statements(); statements1.term = term; break;
+      case 669: e01 = new ART_C_e0(); e01.term = term; break;
+      case 672: cases1 = new ART_C_cases(); cases1.term = term; break;
+      case 678: statements1 = new ART_C_statements(); statements1.term = term; break;
+      case 684: printElements1 = new ART_C_printElements(); printElements1.term = term; break;
+      case 690: ID1 = new ART_C_ID(); ID1.term = term; break;
+      case 691: statement1 = new ART_C_statement(); statement1.term = term; break;
+      case 695: ID1 = new ART_C_ID(); ID1.term = term; break;
+      case 701: STRING_SQ1 = new ART_C_STRING_SQ(); STRING_SQ1.term = term; break;
+      case 708: STRING_SQ1 = new ART_C_STRING_SQ(); STRING_SQ1.term = term; break;
+      case 710: e01 = new ART_C_e0(); e01.term = term; break;
+      case 717: STRING_SQ1 = new ART_C_STRING_SQ(); STRING_SQ1.term = term; break;
+      case 719: e01 = new ART_C_e0(); e01.term = term; break;
+      case 721: e02 = new ART_C_e0(); e02.term = term; break;
+      case 728: STRING_SQ1 = new ART_C_STRING_SQ(); STRING_SQ1.term = term; break;
+      case 730: e01 = new ART_C_e0(); e01.term = term; break;
+      case 732: e02 = new ART_C_e0(); e02.term = term; break;
+      case 734: e03 = new ART_C_e0(); e03.term = term; break;
+      case 744: STRING_SQ1 = new ART_C_STRING_SQ(); STRING_SQ1.term = term; break;
+      case 753: e01 = new ART_C_e0(); e01.term = term; break;
+      case 758: e01 = new ART_C_e0(); e01.term = term; break;
+      case 763: e01 = new ART_C_e0(); e01.term = term; break;
+      case 776: e01 = new ART_C_e0(); e01.term = term; break;
+      case 786: e01 = new ART_C_e0(); e01.term = term; break;
+      case 788: e02 = new ART_C_e0(); e02.term = term; break;
       }
     }
 
     public AbstractAttributeBlock getAttributes(int nodeNumber) {
       switch(nodeNumber){
-      case 571: return ID1;
-      case 573: return e01;
-      case 577: return ID1;
-      case 579: return e01;
-      case 583: return ID1;
-      case 585: return e01;
-      case 589: return ID1;
-      case 591: return e01;
-      case 595: return ID1;
-      case 597: return e01;
-      case 601: return ID1;
-      case 603: return e01;
-      case 609: return statements1;
-      case 612: return ID1;
-      case 614: return statements2;
-      case 620: return e01;
-      case 622: return statements1;
-      case 623: return elseOpt1;
-      case 627: return e01;
-      case 629: return statements1;
-      case 635: return ID1;
-      case 637: return e01;
-      case 639: return e02;
-      case 641: return statement1;
-      case 643: return statements1;
-      case 650: return e01;
-      case 653: return cases1;
-      case 660: return printElements1;
-      case 666: return ID1;
-      case 667: return statement1;
-      case 671: return ID1;
-      case 676: return statement1;
-      case 682: return STRING_SQ1;
-      case 689: return STRING_SQ1;
-      case 691: return e01;
-      case 698: return STRING_SQ1;
-      case 700: return e01;
-      case 702: return e02;
-      case 709: return STRING_SQ1;
-      case 711: return e01;
-      case 713: return e02;
-      case 715: return e03;
-      case 725: return STRING_SQ1;
-      case 734: return e01;
-      case 739: return e01;
-      case 744: return e01;
-      case 757: return e01;
-      case 767: return e01;
-      case 769: return e02;
+      case 590: return ID1;
+      case 592: return e01;
+      case 596: return ID1;
+      case 598: return e01;
+      case 602: return ID1;
+      case 604: return e01;
+      case 608: return ID1;
+      case 610: return e01;
+      case 614: return ID1;
+      case 616: return e01;
+      case 620: return ID1;
+      case 622: return e01;
+      case 628: return statements1;
+      case 631: return ID1;
+      case 633: return statements2;
+      case 639: return e01;
+      case 641: return statements1;
+      case 642: return elseOpt1;
+      case 646: return e01;
+      case 648: return statements1;
+      case 654: return ID1;
+      case 656: return e01;
+      case 658: return e02;
+      case 660: return statement1;
+      case 662: return statements1;
+      case 669: return e01;
+      case 672: return cases1;
+      case 678: return statements1;
+      case 684: return printElements1;
+      case 690: return ID1;
+      case 691: return statement1;
+      case 695: return ID1;
+      case 701: return STRING_SQ1;
+      case 708: return STRING_SQ1;
+      case 710: return e01;
+      case 717: return STRING_SQ1;
+      case 719: return e01;
+      case 721: return e02;
+      case 728: return STRING_SQ1;
+      case 730: return e01;
+      case 732: return e02;
+      case 734: return e03;
+      case 744: return STRING_SQ1;
+      case 753: return e01;
+      case 758: return e01;
+      case 763: return e01;
+      case 776: return e01;
+      case 786: return e01;
+      case 788: return e02;
       default: Util.fatal("getAttributes: unknown node " + nodeNumber + ". Probable out-of-date ARTGeneratedActions - regenerate and recompile"); return null;
       }
     }
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 574: variables.put(ID1.v, e01.v);  break;
-      case 580: variables.put(ID1.v, variables.getOrDefault(ID1.v, 0) + e01.v);  break;
-      case 586: variables.put(ID1.v, variables.getOrDefault(ID1.v, 0) - e01.v);  break;
-      case 592: variables.put(ID1.v, variables.getOrDefault(ID1.v, 0) * e01.v);  break;
-      case 598: variables.put(ID1.v, variables.getOrDefault(ID1.v, 0) / e01.v);  break;
-      case 604: variables.put(ID1.v, variables.getOrDefault(ID1.v, 0) % e01.v);  break;
-      case 616: try { interpret(statements1); } catch (Exception e) { System.out.print("Caught error successfully. \n"); variables.put(ID1.v, 1); interpret(statements2); }  break;
-      case 623: if (e01.v != 0) {interpret(statements1);} else{ interpret(elseOpt1);}  break;
-      case 631: interpret(e01); 
-  while (e01.v != 0) { 
-    interpret(statements1); 
-    interpret(e01); 
+      case 593: { variables.put(ID1.v, e01.v); }  break;
+      case 599: { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    variables.put(ID1.v, arithmeticOp(v, e01.v, "+"));
   }  break;
-      case 645: for (variables.put(ID1.v, e01.v), interpret(e02); e02.v != 0; interpret(statement1)) { interpret(statements1); interpret(statement1); interpret(e02);}  break;
-      case 655: switchVal = e01.v; interpret(cases1);  switchVal=0; CheckContinues=false; break;
-      case 667: procedures.put(ID1.v, statement1);  break;
-      case 672: interpret(procedures.get(ID1.v));  break;
-      case 684: plugin(STRING_SQ1.v);  break;
-      case 693: plugin(STRING_SQ1.v, e01.v);  break;
-      case 704: plugin(STRING_SQ1.v, e01.v, e02.v);  break;
-      case 717: plugin(STRING_SQ1.v, e01.v, e02.v, e03.v);  break;
-      case 721: plugin("init");  break;
-      case 726: plugin("load", STRING_SQ1.v);  break;
-      case 730: plugin("invert");  break;
-      case 735: plugin("brightness", e01.v);  break;
-      case 740: plugin("contrast", e01.v);  break;
-      case 745: plugin("rotate", e01.v);  break;
-      case 749: plugin("grayscale");  break;
-      case 753: plugin("sobel");  break;
-      case 758: plugin("blur", e01.v);  break;
-      case 762: plugin("summerVibe");  break;
-      case 771: if (e01.v == e02.v) { 
-      successCount++; 
-      System.out.println("** Successful Test **");
-     } else { 
-        System.out.println("** Failed Test **");
-       failCount++; 
+      case 605: { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    variables.put(ID1.v, arithmeticOp(v, e01.v, "-"));
+  }  break;
+      case 611: { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    variables.put(ID1.v, arithmeticOp(v, e01.v, "*"));
+  }  break;
+      case 617: { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    variables.put(ID1.v, arithmeticOp(v, e01.v, "/"));
+  }  break;
+      case 623: { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    variables.put(ID1.v, arithmeticOp(v, e01.v, "%"));
+  }  break;
+      case 635: { try { interpret(statements1); } catch (Exception e) { System.out.print("Caught error successfully. \n"); variables.put(ID1.v, 1); interpret(statements2); } }  break;
+      case 642: { if (toBoolean(e01.v)) { 
+         interpret(statements1); 
+       } else { 
+         interpret(elseOpt1); 
+       }
+     }  break;
+      case 650: { interpret(e01); 
+       while (toBoolean(e01.v)) { 
+         interpret(statements1); 
+         interpret(e01); 
+       }
+     }  break;
+      case 664: { for (variables.put(ID1.v, e01.v), interpret(e02); 
+            toBoolean(e02.v); 
+            interpret(statement1)) { 
+         interpret(statements1); 
+         interpret(statement1); 
+         interpret(e02); 
+       }
+     }  break;
+      case 674: { switchVal = toInt(e01.v); 
+       interpret(cases1); 
+       switchVal = 0; 
+       CheckContinues = false; 
+     }  break;
+      case 691: { procedures.put(ID1.v, statement1); }  break;
+      case 696: { interpret(procedures.get(ID1.v)); }  break;
+      case 703: { plugin(STRING_SQ1.v); }  break;
+      case 712: { plugin(STRING_SQ1.v, e01.v); }  break;
+      case 723: { plugin(STRING_SQ1.v, e01.v, e02.v); }  break;
+      case 736: { plugin(STRING_SQ1.v, e01.v, e02.v, e03.v); }  break;
+      case 740: { plugin("init"); }  break;
+      case 745: { plugin("load", STRING_SQ1.v); }  break;
+      case 749: { plugin("invert"); }  break;
+      case 754: { plugin("brightness", e01.v); }  break;
+      case 759: { plugin("contrast", e01.v); }  break;
+      case 764: { plugin("rotate", e01.v); }  break;
+      case 768: { plugin("grayscale"); }  break;
+      case 772: { plugin("sobel"); }  break;
+      case 777: { plugin("blur", e01.v); }  break;
+      case 781: { plugin("summerVibe"); }  break;
+      case 790: { if (compare(e01.v, e02.v, "==")) { 
+         successCount++; 
+         System.out.println("** Successful Test **");
+       } else { 
+         System.out.println("** Failed Test **");
+         failCount++; 
+       }
      }  break;
       }
     }
@@ -726,24 +990,24 @@ public class ARTGeneratedActions extends AbstractActions {
 
     public void initRHSAttributeBlock(int nodeNumber, int term) {
       switch(nodeNumber){
-      case 775: statement1 = new ART_C_statement(); statement1.term = term; break;
-      case 776: statements1 = new ART_C_statements(); statements1.term = term; break;
-      case 779: statement1 = new ART_C_statement(); statement1.term = term; break;
+      case 794: statement1 = new ART_C_statement(); statement1.term = term; break;
+      case 795: statements1 = new ART_C_statements(); statements1.term = term; break;
+      case 798: statement1 = new ART_C_statement(); statement1.term = term; break;
       }
     }
 
     public AbstractAttributeBlock getAttributes(int nodeNumber) {
       switch(nodeNumber){
-      case 775: return statement1;
-      case 776: return statements1;
-      case 779: return statement1;
+      case 794: return statement1;
+      case 795: return statements1;
+      case 798: return statement1;
       default: Util.fatal("getAttributes: unknown node " + nodeNumber + ". Probable out-of-date ARTGeneratedActions - regenerate and recompile"); return null;
       }
     }
 
     public void action(int nodeNumber) {
       switch(nodeNumber){
-      case 779: System.out.println("Final variable map " + variables);  break;
+      case 798: { System.out.println("Final variable map " + variables); }  break;
       }
     }
   }

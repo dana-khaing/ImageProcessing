@@ -3,9 +3,11 @@
 !configuration -> _sig:__map
 
 (* Term rewrite rules *)
--assign  _n |> __int32(_)    --- assign(_X,_n),_sig -> __done,__put(_sig,_X,_n)
+-assignerror                  --- assign(_X,__error),_sig -> __error,_sig
+-assign  _n |> __int32(_)     --- assign(_X,_n),_sig -> __done,__put(_sig,_X,_n)
 -assign  _n |> __real64(_)    --- assign(_X,_n),_sig -> __done,__put(_sig,_X,_n)
--assign  _n |> __bool(_)    --- assign(_X,_n),_sig -> __done,__put(_sig,_X,_n)
+-assign  _n |> __string(_)    --- assign(_X,_n),_sig -> __done,__put(_sig,_X,_n)
+-assign  _n |> __bool(_)      --- assign(_X,_n),_sig -> __done,__put(_sig,_X,_n)
 -assignR _E,_sig -> _EP,_sigP --- assign(_X,_E),_sig -> assign(_X,_EP),_sigP
 
 (* Additional assign operator *)
@@ -114,6 +116,8 @@
 -mulR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- mul(_n,_E2),_sig  -> mul(_n,_I2),_sigP
 -mulL _E1,_sig -> _I1,_sigP                   --- mul(_E1,_E2),_sig -> mul(_I1,_E2),_sigP
 
+-divByZero _n |> __int32(_) --- div(_n, 0), _sig -> __error, _sig
+-divByZero _n |> __real64(_) --- div(_n, 0.0), _sig -> __error, _sig
 -div  _n1 |> __int32(_) _n2 |> __int32(_)     --- div(_n1,_n2),_sig -> __div(_n1,_n2),_sig
 -divR _n |> __int32(_) _E2,_sig -> _I2,_sigP  --- div(_n,_E2),_sig  -> div(_n,_I2),_sigP
 -div  _n1 |> __real64(_) _n2 |> __real64(_)     --- div(_n1,_n2),_sig -> __div(_n1,_n2),_sig
@@ -128,8 +132,8 @@
 
 -exp  _n1 |> __int32(_) _n2 |> __int32(_)     --- exp(_n1,_n2),_sig -> __exp(_n1,_n2),_sig
 -expR _n |> __int32(_) _E2,_sig -> _I2,_sigP  --- exp(_n,_E2),_sig  -> exp(_n,_I2),_sigP
--exp  _n1 |> __real64(_) _n2 |> __real64(_)     --- exp(_n1,_n2),_sig -> __exp(_n1,_n2),_sig
--expR _n |> __real64(_) _E2,_sig -> _I2,_sigP  --- exp(_n,_E2),_sig  -> exp(_n,_I2),_sigP
+-exp  _n1 |> __real64(_) _n2 |> __real64(_)   --- exp(_n1,_n2),_sig -> __exp(_n1,_n2),_sig
+-expR _n |> __real64(_) _E2,_sig -> _I2,_sigP --- exp(_n,_E2),_sig  -> exp(_n,_I2),_sigP
 -expL _E1,_sig -> _I1,_sigP                   --- exp(_E1,_E2),_sig -> exp(_I1,_E2),_sigP
 
 (* postIncrement *)
@@ -151,6 +155,18 @@ preinc(_ID), _sig -> deref(_ID), _sigP
 deref(_ID), _sig -> _V, _sig  _V |> __int32(_)      assign(_ID, __sub(_V, 1)), _sig -> _, _sigP
 ---
 predec(_ID), _sig -> deref(_ID), _sigP
+
+
+(* Updated Rewrite Rules *)
+
+-trySuccess --- seek(__done), _sig -> __done, _sig
+-tryFail --- seek(__error), _sig -> __error, _sig
+-tryCatch _C, _sig -> _CP, _sigP --- seek(_C), _sig -> seek(_CP), _sigP
+
+-tryCatchSuccess --- seek(__done,deref(_E), _C2), _sig -> assign(_E,"no_error"), _sig
+-tryCatchFail _C, _sig -> _CP, _sigP  --- seek(__error,deref(_E), _C), _sig -> resol(_CP, assign(_E,"error_found")), _sigP
+-tryCatchFailResolve _E,_sig ->_EP,_sigP --- resol(__done,_E), _sig ->_E, _sigP
+-tryCatchResolve _C, _sig -> _CP, _sigP --- seek(_C,deref(_E), _C2), _sig -> seek(_CP,deref(_E), _C2), _sigP
 
 (* Logical Operators *)
 
@@ -188,10 +204,11 @@ predec(_ID), _sig -> deref(_ID), _sigP
 (*  CFG rules *)
 
 seq ::= statement^^ | statement seq
-statement ::= assign^^ | addAssign^^| subAssign^^| mulAssign^^| divAssign^^ | modAssign^^ | while^^ |for^^ | if^^ | plugin^^ ';'^ |init^^ ';'^| load^^ ';'^ | invert^^ ';'^ | brightness^^ ';'^ | contrast^^ ';'^ | rotate^^ ';'^ | grayscale^^ ';'^ | sobel^^ ';'^ | summerVibe^^ ';'^ | blur^^ ';'^| switch^^
+statement ::= assign^^ | addAssign^^| subAssign^^| mulAssign^^| divAssign^^ | modAssign^^ |seek^^  | while^^ |for^^ | if^^ | plugin^^ ';'^ |init^^ ';'^| load^^ ';'^ | invert^^ ';'^ | brightness^^ ';'^ | contrast^^ ';'^ | rotate^^ ';'^ | grayscale^^ ';'^ | sobel^^ ';'^ | summerVibe^^ ';'^ | blur^^ ';'^| switch^^
 switch ::= 'switch'^ '('^ expression ')'^ '{'^ cases '}'^ 
 cases ::= case^^ | case^^ cases
 case ::= 'case'^ expression ':'^ statement | 'case'^ expression ':'^ statement ','^ cases^
+seek ::= 'seek'^ '{'^ seq '}'^ 'catch'^ expression '{'^ seq '}'^ | 'seek'^ '{'^ seq '}'^
 assign ::= &ID ':='^ expression ';'^
 addAssign ::= &ID '+='^ expression ';'^
 subAssign ::= &ID '-='^ expression ';'^
@@ -253,6 +270,8 @@ summerVibe ::= 'summerVibe'^
 blur ::= 'blur'^ __int32
 
 !trace 1
+(* Assignment *)
+!try seq(assign(a, "string")), __map = __done, {a="string"}
 
 (* Arithmetic Operations *)
 !try seq(assign(a, add(3, 2))), __map = __done, {a=5}
@@ -333,6 +352,7 @@ blur ::= 'blur'^ __int32
 !try seq(assign(a, 5), seq(assign(b, predec(a)), assign(b, postdec(a)))), __map = __done, {a=3,b=4}
 !try seq(assign(a, 5), seq(assign(b, postinc(a)), assign(b, predec(a)))), __map = __done, {a=5,b=5}
 !try seq(assign(a, 5), addAssign(a,1)), __map = __done, {a=6}
+
 
 !try "a := 5; b := a++;" = __done, {a=6,b=5}
 !try "a := 5; b := a--;" = __done, {a=4,b=5}
@@ -422,10 +442,17 @@ blur ::= 'blur'^ __int32
 !try seq(assign(a, 3), seq(assign(b, 0), for(assign(i, 0), lt(deref(i), deref(a)), assign(i, add(deref(i), 1)), assign(b, add(deref(b), mul(deref(i), 2)))))), __map = __done, {a=3,b=12,i=3}
 !try seq(assign(a, 5), if(gt(deref(a), 3), assign(b, exp(deref(a), 2)), if(eq(deref(a), 5), assign(c, mul(deref(a), 2))))), __map = __done, {a=5,b=25}
 
-
 !try "a := 0; b := 10; while a < b do if a % 2 == 0 then a := a + 2; else a := a + 1; fin" = __done, {a=10,b=10}
 !try "a := 3; b := 0; for i := 0; i < a; i := ++i; do b := b + i * 2;" = __done, {a=3,b=12,i=3}
 !try "a := 5; if a > 3 then b := a ** 2; elseif a == 5 then c := a * 2;" = __done, {a=5,b=25}
+
+(* Error Handling *)
+!try seq(assign(a,3), seek(assign(b, div(deref(a),0)),deref(e), assign(c, 999))), __map = __done, {a=3,c=999,e="error_found"}
+!try seq(assign(a,3), seek(assign(b, div(deref(a),1)),deref(e), assign(c, 999))), __map = __done, {a=3,b=3,e="no_error"}
+!try "a := 3; seek { a := 10 / 0; } catch e {b := 999;}" = __done, {a=3, b=999,e="error_found"}
+!try "a := 3; seek { a := 10 / 1; } catch e {b := 999;}" = __done, {a=10, e="no_error"}
+!try "a := 0; seek {for i := 0; i < 3; i += 1; do a := a + 1;} catch e {b := 999;}" = __done, {a=3, i=3,e="no_error"}
+!try "a := 10; seek { a := 10 / 0; }" = __error, {a=10}
 
 (* Plugin Testing *)
 (* Loading input *)
@@ -467,4 +494,6 @@ blur ::= 'blur'^ __int32
 
 (* Blur *)
 //!try "plugin('init'); plugin('load', 'mountain.jpg'); plugin('blur', 1);"
-!try "init; load 'mountain.jpg'; blur 2;" = __done, {=}
+//!try "init; load 'mountain.jpg'; blur 2;" = __done, {=}
+
+

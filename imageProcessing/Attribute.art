@@ -1,200 +1,534 @@
-(* gcdAttribute.art - GCD calculator with attribute-actions and native Java actions *)
-(* Supports plugin expressions with integer return values *)
 //!interpreter attributeAction
 !support
 !! import java.util.Map; import java.util.HashMap; !!
-!! Map<String, Integer> variables = new HashMap<>(); 
+!! Map<String, Object> variables = new HashMap<>(); 
    Map<String, AbstractAttributeBlock> procedures = new HashMap<>(); 
    int successCount = 0; 
    int failCount = 0;
    int switchVal;
-   boolean CheckContinues= false;
-   !!
+   boolean CheckContinues = false;
 
-initAndTest ::=  !!variables.clear(); !!
+Object arithmeticOp(Object a, Object b, String op) {
+    if (a instanceof Integer && b instanceof Integer) {
+        int ia = (Integer) a;
+        int ib = (Integer) b;
+        switch (op) {
+            case "+": return ia + ib;
+            case "-": return ia - ib;
+            case "*": return ia * ib;
+            case "/": return ia / ib;
+            case "%": return ia % ib;
+        }
+    } else if (a instanceof Double || b instanceof Double) {
+        double da = (a instanceof Double) ? (Double) a : (Integer) a;
+        double db = (b instanceof Double) ? (Double) b : (Integer) b;
+        switch (op) {
+            case "+": return da + db;
+            case "-": return da - db;
+            case "*": return da * db;
+            case "/": return da / db;
+            case "%": return da % db;
+        }
+    }
+    return 0; // Default for unsupported types
+}
+
+boolean toBoolean(Object o) {
+    if (o instanceof Boolean) {
+        return (Boolean) o;
+    } else if (o instanceof Number) {
+        return ((Number) o).doubleValue() != 0;
+    }
+    return false; // Default
+}
+
+boolean compare(Object a, Object b, String op) {
+    if (a instanceof Integer && b instanceof Integer) {
+        int ia = (Integer) a;
+        int ib = (Integer) b;
+        switch (op) {
+            case ">": return ia > ib;
+            case "<": return ia < ib;
+            case ">=": return ia >= ib;
+            case "<=": return ia <= ib;
+            case "==": return ia == ib;
+            case "!=": return ia != ib;
+        }
+    } else if (a instanceof Double || b instanceof Double) {
+        double da = (a instanceof Double) ? (Double) a : (Integer) a;
+        double db = (b instanceof Double) ? (Double) b : (Integer) b;
+        switch (op) {
+            case ">": return da > db;
+            case "<": return da < db;
+            case ">=": return da >= db;
+            case "<=": return da <= db;
+            case "==": return da == db;
+            case "!=": return da != db;
+        }
+    } else if (a instanceof Boolean && b instanceof Boolean) {
+        boolean ba = (Boolean) a;
+        boolean bb = (Boolean) b;
+        switch (op) {
+            case "==": return ba == bb;
+            case "!=": return ba != bb;
+        }
+    }
+    return false; // Default
+}
+
+Object negate(Object o) {
+    if (o instanceof Integer) {
+        return -(Integer) o;
+    } else if (o instanceof Double) {
+        return -(Double) o;
+    }
+    return 0; // Default
+}
+
+boolean logicalNot(Object o) {
+    if (o instanceof Boolean) {
+        return !(Boolean) o;
+    } else if (o instanceof Number) {
+        return ((Number) o).doubleValue() == 0;
+    }
+    return true; // Default
+}
+
+Object increment(Object o) {
+    if (o instanceof Integer) {
+        return (Integer) o + 1;
+    } else if (o instanceof Double) {
+        return (Double) o + 1.0;
+    }
+    return o; // No change for other types
+}
+
+Object decrement(Object o) {
+    if (o instanceof Integer) {
+        return (Integer) o - 1;
+    } else if (o instanceof Double) {
+        return (Double) o - 1.0;
+    }
+    return o; // No change for other types
+}
+
+double toDouble(Object o) {
+    if (o instanceof Double) {
+        return (Double) o;
+    } else if (o instanceof Integer) {
+        return (Integer) o;
+    }
+    return 0.0; // Default
+}
+
+int toInt(Object o) {
+    if (o instanceof Integer) {
+        return (Integer) o;
+    }
+    return 0; // Default
+}
+!!
+
+initAndTest ::= 
+  !! { variables.clear(); } !!
   statements
-  !! System.out.println("Tests completed: " + successCount + " successes, " + failCount + " failures"); !!  // Test summary
+  !! { System.out.println("Tests completed: " + successCount + " successes, " + failCount + " failures"); } !!  // Test summary
 
 statements ::= 
   statement statements
-| statement !! System.out.println("Final variable map " + variables); !! 
+| statement !! { System.out.println("Final variable map " + variables); } !! 
 
 statement ::= 
-  ID ':=' e0 ';' !! variables.put(ID1.v, e01.v); !!     // Assignment
-| ID '+=' e0 ';' !! variables.put(ID1.v, variables.getOrDefault(ID1.v, 0) + e01.v); !! // Increment
-| ID '-=' e0 ';' !! variables.put(ID1.v, variables.getOrDefault(ID1.v, 0) - e01.v); !! // Decrement
-| ID '*=' e0 ';' !! variables.put(ID1.v, variables.getOrDefault(ID1.v, 0) * e01.v); !! // Multiply
-| ID '/=' e0 ';' !! variables.put(ID1.v, variables.getOrDefault(ID1.v, 0) / e01.v); !! // Divide
-| ID '%=' e0 ';' !! variables.put(ID1.v, variables.getOrDefault(ID1.v, 0) % e01.v); !! // Modulus
+  ID ':=' e0 ';' !! { variables.put(ID1.v, e01.v); } !!     // Assignment
+| ID '+=' e0 ';' !! { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    variables.put(ID1.v, arithmeticOp(v, e01.v, "+"));
+  } !! // Increment
+| ID '-=' e0 ';' !! { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    variables.put(ID1.v, arithmeticOp(v, e01.v, "-"));
+  } !! // Decrement
+| ID '*=' e0 ';' !! { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    variables.put(ID1.v, arithmeticOp(v, e01.v, "*"));
+  } !! // Multiply
+| ID '/=' e0 ';' !! { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    variables.put(ID1.v, arithmeticOp(v, e01.v, "/"));
+  } !! // Divide
+| ID '%=' e0 ';' !! { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    variables.put(ID1.v, arithmeticOp(v, e01.v, "%"));
+  } !! // Modulus
 | 'try' '{' statements!< '}' 'catch' ID '{' statements!< '}'';'  // Try-catch block
-  !! try { interpret(statements1); } catch (Exception e) { System.out.print("Caught error successfully. \n"); variables.put(ID1.v, 1); interpret(statements2); } !!
-
-| 'if' e0 'then' statements!< elseOpt!<                  // If statement 
-  !! if (e01.v != 0) {interpret(statements1);} else{ interpret(elseOpt1);} !! 
-
-
-| 'while' e0!< 'do' statements!< 'fin' ';'                        // While statement 
-  !! interpret(e01); 
-  while (e01.v != 0) { 
-    interpret(statements1); 
-    interpret(e01); 
-  } !! 
-
-| 'for' ID ':=' e0 ';' e0!< ';'statement!< 'do' statements!< 'fin' ';'     // For loop (range-based)
-  !! for (variables.put(ID1.v, e01.v), interpret(e02); e02.v != 0; interpret(statement1)) { interpret(statements1); interpret(statement1); interpret(e02);} !!
-
+  !! { try { interpret(statements1); } catch (Exception e) { System.out.print("Caught error successfully. \n"); variables.put(ID1.v, 1); interpret(statements2); } } !!
+| 'if' e0 'then' statements!< elseOpt!<  // If statement 
+  !! { if (toBoolean(e01.v)) { 
+         interpret(statements1); 
+       } else { 
+         interpret(elseOpt1); 
+       }
+     } !!
+| 'while' e0!< 'do' statements!< 'fin' ';'  // While statement 
+  !! { interpret(e01); 
+       while (toBoolean(e01.v)) { 
+         interpret(statements1); 
+         interpret(e01); 
+       }
+     } !!
+| 'for' ID ':=' e0 ';' e0!< ';' statement!< 'do' statements!< 'fin' ';'  // For loop (range-based)
+  !! { for (variables.put(ID1.v, e01.v), interpret(e02); 
+            toBoolean(e02.v); 
+            interpret(statement1)) { 
+         interpret(statements1); 
+         interpret(statement1); 
+         interpret(e02); 
+       }
+     } !!
 | 'switch' '(' e0 ')' '{' cases!< '}' ';' 
- !! switchVal = e01.v; interpret(cases1);  switchVal=0; CheckContinues=false;!!
-
-
-| 'print' '(' printElements ')' ';' // print statement 
-
-| 'procedure' ID statement!< !! procedures.put(ID1.v, statement1); !!  // procedure
-
-| 'call' ID ';' !! interpret(procedures.get(ID1.v)); !! 
-
-| '{' statement '}'                                   //Compound statement
-
-| 'plugin' '(' STRING_SQ ')' ';' !! plugin(STRING_SQ1.v); !!
-| 'plugin' '(' STRING_SQ ',' e0 ')' ';' !! plugin(STRING_SQ1.v, e01.v); !!
-| 'plugin' '(' STRING_SQ ',' e0 ',' e0 ')' ';' !! plugin(STRING_SQ1.v, e01.v, e02.v); !!
-| 'plugin' '(' STRING_SQ ',' e0 ',' e0 ',' e0 ')' ';' !! plugin(STRING_SQ1.v, e01.v, e02.v, e03.v); !!
-|'init' ';'           !! plugin("init"); !!
-| 'load' STRING_SQ ';'   !! plugin("load", STRING_SQ1.v); !!
-| 'invert' ';'           !! plugin("invert"); !!
-| 'brightness' e0 ';' !! plugin("brightness", e01.v); !!
-| 'contrast' e0 ';' !! plugin("contrast", e01.v); !!
-| 'rotate' e0 ';' !! plugin("rotate", e01.v); !!
-| 'grayscale' ';' !! plugin("grayscale"); !!
-| 'sobel' ';' !! plugin("sobel"); !!
-| 'blur' e0 ';' !! plugin("blur", e01.v); !!
-| 'summerVibe' ';' !! plugin("summerVibe"); !!
-| 'ASSERT' '(' e0 ',' e0 ')' ';'                      // Assertion statement
-  !! if (e01.v == e02.v) { 
-      successCount++; 
-      System.out.println("** Successful Test **");
-     } else { 
-        System.out.println("** Failed Test **");
-       failCount++; 
+  !! { switchVal = toInt(e01.v); 
+       interpret(cases1); 
+       switchVal = 0; 
+       CheckContinues = false; 
+     } !!
+| '{' statements '}'  // Compound statement
+| 'print' '(' printElements ')' ';' // Print statement
+| 'procedure' ID statement!< !! { procedures.put(ID1.v, statement1); } !!  // Procedure
+| 'call' ID ';' !! { interpret(procedures.get(ID1.v)); } !! 
+| 'plugin' '(' STRING_SQ ')' ';' !! { plugin(STRING_SQ1.v); } !!
+| 'plugin' '(' STRING_SQ ',' e0 ')' ';' !! { plugin(STRING_SQ1.v, e01.v); } !!
+| 'plugin' '(' STRING_SQ ',' e0 ',' e0 ')' ';' !! { plugin(STRING_SQ1.v, e01.v, e02.v); } !!
+| 'plugin' '(' STRING_SQ ',' e0 ',' e0 ',' e0 ')' ';' !! { plugin(STRING_SQ1.v, e01.v, e02.v, e03.v); } !!
+| 'init' ';' !! { plugin("init"); } !!
+| 'load' STRING_SQ ';' !! { plugin("load", STRING_SQ1.v); } !!
+| 'invert' ';' !! { plugin("invert"); } !!
+| 'brightness' e0 ';' !! { plugin("brightness", e01.v); } !!
+| 'contrast' e0 ';' !! { plugin("contrast", e01.v); } !!
+| 'rotate' e0 ';' !! { plugin("rotate", e01.v); } !!
+| 'grayscale' ';' !! { plugin("grayscale"); } !!
+| 'sobel' ';' !! { plugin("sobel"); } !!
+| 'blur' e0 ';' !! { plugin("blur", e01.v); } !!
+| 'summerVibe' ';' !! { plugin("summerVibe"); } !!
+| 'ASSERT' '(' e0 ',' e0 ')' ';'  // Assertion statement
+  !! { if (compare(e01.v, e02.v, "==")) { 
+         successCount++; 
+         System.out.println("** Successful Test **");
+       } else { 
+         System.out.println("** Failed Test **");
+         failCount++; 
+       }
      } !!
 
 elseOpt ::= 
-'elseif' e0 'then' statements!< elseOpt // 'elseif'
-!! if (e01.v != 0) {interpret(statements1);} else{ interpret(elseOpt1);} !!
-|'else' statement
+  'elseif' e0 'then' statements!< elseOpt 
+  !! { if (toBoolean(e01.v)) { 
+         interpret(statements1); 
+       } else { 
+         interpret(elseOpt1); 
+       }
+     } !!
+| 'else' statement
 | #
 
-cases ::='default' ':' statements!< 'break' ';'    // Default case
-!! interpret(statements1);!!
-| 'default' ':' statements!<                 // Default case without break
-!! interpret(statements1);!!
-| 'default' ':' statements!<  'continue'','               // Default case without break
-!! interpret(statements1);!!
-| 'case' e0 ':' statements!< 'break' ';'  cases!<        // Case statements
-!! if (switchVal == e01.v && CheckContinues == false){interpret(statements1);} else if (switchVal == e01.v && CheckContinues == true) {interpret(statements1);CheckContinues=false;} else {interpret(cases1);}!!
-| 'case' e0 ':' statements!<   cases!<               // Case statements without break
-!! if (switchVal == e01.v) {interpret(statements1);  CheckContinues= true; interpret(cases1);} else {interpret(cases1);}!!
-| 'case' e0 ':' statements!< 'continue' ';'   cases!<               // Case statements without break
-!! if (switchVal == e01.v) {interpret(statements1);  CheckContinues= true; interpret(cases1);} else {interpret(cases1);}!!
-| 'case' e0 ':' statements!< 'break' ';'      // End Case statements with break
-!! if (switchVal == e01.v || CheckContinues == true) {interpret(statements1);}!!
-| 'case' e0 ':' statements!<               //End Case statements without break
-!! if (switchVal == e01.v || CheckContinues == true) {interpret(statements1);}!!
-| 'case' e0 ':' statements!< 'continue' ';'              //End Case statements with continue
-!! if (switchVal == e01.v || CheckContinues == true) {interpret(statements1);}!!
+cases ::=
+  'default' ':' statements!< 'break' ';'  // Default case
+  !! { interpret(statements1); } !!
+|  'default' ':' 'return' statements!<   // Default case with return
+  !! { interpret(statements1); } !!
+| 'default' ':' statements!<  // Default case without break
+  !! { interpret(statements1); } !!
+| 'case' e0 ':' statements!< 'break' ';' cases!<  // Case statements
+  !! { int caseVal = toInt(e01.v);
+       if (switchVal == caseVal && !CheckContinues) { 
+         interpret(statements1); 
+       } else if (switchVal == caseVal && CheckContinues) { 
+         interpret(statements1); 
+         CheckContinues = false; 
+       } else { 
+         interpret(cases1); 
+       }
+     } !!
+| 'case' e0 ':' 'return' statements!< cases!<  // Case statements with return
+  !! { int caseVal = toInt(e01.v);
+       if (switchVal == caseVal && !CheckContinues) { 
+         interpret(statements1); 
+       } else if (switchVal == caseVal && CheckContinues) { 
+         interpret(statements1); 
+         CheckContinues = false; 
+       } else { 
+         interpret(cases1); 
+       }
+     } !!
+| 'case' e0 ':' statements!< cases!<  // Case statements without break
+  !! { int caseVal = toInt(e01.v);
+       if (switchVal == caseVal) { 
+         interpret(statements1); 
+         CheckContinues = true; 
+         interpret(cases1); 
+       } else { 
+         interpret(cases1); 
+       }
+     } !!
+| 'case' e0 ':' statements!< 'break' ';'  // End case with break
+  !! { int caseVal = toInt(e01.v);
+       if (switchVal == caseVal || CheckContinues) { 
+         interpret(statements1); 
+       }
+     } !!
+| 'case' e0 ':' 'return' statements!<  // End case with return
+  !! { int caseVal = toInt(e01.v);
+       if (switchVal == caseVal || CheckContinues) { 
+         interpret(statements1); 
+       }
+     } !!
+| 'case' e0 ':' statements!<  // End case without break
+  !! { int caseVal = toInt(e01.v);
+       if (switchVal == caseVal || CheckContinues) { 
+         interpret(statements1); 
+       }
+     } !!
 
 
 printElements ::=
-  STRING_SQ !! System.out.print(STRING_SQ1.v); !!
-  | STRING_SQ !! System.out.print(STRING_SQ1.v); !! ',' printElements
-  | e0 !! System.out.print(e01.v); !!
-  | e0 !! System.out.print(e01.v); !! ',' printElements
+  STRING_SQ !! { System.out.print(STRING_SQ1.v); } !!
+| STRING_SQ !! { System.out.print(STRING_SQ1.v); } !! ',' printElements
+| e0 !! { System.out.print(e01.v); } !!
+| e0 !! { System.out.print(e01.v); } !! ',' printElements
 
+e0 <v:Object> ::=
+  e1         !! { e0.v = e11.v; } !!
+| e1 '>' e1 !! { e0.v = compare(e11.v, e12.v, ">"); } !! // Greater than
+| e1 '<' e1 !! { e0.v = compare(e11.v, e12.v, "<"); } !! // Less than
+| e1 '>=' e1 !! { e0.v = compare(e11.v, e12.v, ">="); } !! // Greater than or equals
+| e1 '<=' e1 !! { e0.v = compare(e11.v, e12.v, "<="); } !! // Less than or equals
+| e1 '==' e1 !! { e0.v = compare(e11.v, e12.v, "=="); } !! // Equal to
+| e1 '!=' e1 !! { e0.v = compare(e11.v, e12.v, "!="); } !! // Not equal to
+| e0 '&&' e0 !! { e0.v = toBoolean(e01.v) && toBoolean(e02.v); } !! // Logical AND
+| e0 '||' e0 !! { e0.v = toBoolean(e01.v) || toBoolean(e02.v); } !! // Logical OR
+| e0 'and' e0 !! { e0.v = toBoolean(e01.v) && toBoolean(e02.v); } !! // Logical AND
+| e0 'or' e0 !! { e0.v = toBoolean(e01.v) || toBoolean(e02.v); } !! // Logical OR
+| e0 'xor' e0 !! { e0.v = toBoolean(e01.v) ^ toBoolean(e02.v); } !! // Logical XOR
 
-e0 <v:int> ::=
-  e1         !! e0.v = e11.v; !!
-| e1 '>'  e1 !! e0.v = e11.v >  e12.v ? 1 : 0; !!     // Greater than
-| e1 '<'  e1 !! e0.v = e11.v <  e12.v ? 1 : 0; !!     // Less than
-| e1 '>=' e1 !! e0.v = e11.v >= e12.v ? 1 : 0; !!     // Greater than or equals
-| e1 '<=' e1 !! e0.v = e11.v <= e12.v ? 1 : 0; !!     // Less than or equals
-| e1 '==' e1 !! e0.v = e11.v == e12.v ? 1 : 0; !!     // Equal to
-| e1 '!=' e1 !! e0.v = e11.v != e12.v ? 1 : 0; !!     // Not equal to
-| e0 '&&' e0 !! e0.v = (e01.v != 0) && (e02.v != 0) ? 1 : 0; !!  // Logical AND
-| e0 '||' e0 !! e0.v = (e01.v != 0) || (e02.v != 0) ? 1 : 0; !!  // Logical OR
-| e0 'and' e0 !! e0.v = (e01.v != 0) && (e02.v != 0) ? 1 : 0; !!  // Logical AND
-| e0 'or'  e0 !! e0.v = (e01.v != 0) || (e02.v != 0) ? 1 : 0; !!  // Logical OR
-| e0 'xor' e0 !! e0.v = (e01.v != 0) ^ (e02.v != 0) ? 1 : 0; !!  // Logical XOR
+e1 <v:Object> ::= 
+  e2         !! { e1.v = e21.v; } !!  
+| e1 '+' e2 !! { e1.v = arithmeticOp(e11.v, e21.v, "+"); } !! // Add
+| e1 '-' e2 !! { e1.v = arithmeticOp(e11.v, e21.v, "-"); } !! // Subtract 
 
-e1 <v:int> ::= 
-  e2         !! e1.v = e21.v; !!  
-| e1 '+' e2 !! e1.v = e11.v + e21.v; !!               // Add
-| e1 '-' e2 !! e1.v = e11.v - e21.v; !!               // Subtract 
+e2 <v:Object> ::=
+  e3         !! { e2.v = e31.v; } !!
+| e2 '*' e3 !! { e2.v = arithmeticOp(e21.v, e31.v, "*"); } !! // Multiply
+| e2 '/' e3 !! { e2.v = arithmeticOp(e21.v, e31.v, "/"); } !! // Divide
+| e2 '%' e3 !! { e2.v = arithmeticOp(e21.v, e31.v, "%"); } !! // Mod
 
-e2 <v:int> ::=
-  e3         !! e2.v = e31.v; !!
-| e2 '*' e3 !! e2.v = e21.v * e31.v; !!               // Multiply
-| e2 '/' e3 !! e2.v = e21.v / e31.v; !!               // Divide
-| e2 '%' e3 !! e2.v = e21.v % e31.v; !!               // Mod
+e3 <v:Object> ::=
+  e4         !! { e3.v = e41.v; } !!
+| '+' e3    !! { e3.v = e31.v; } !! // Positive
+| '-' e3    !! { e3.v = negate(e31.v); } !! // Negate
+| '!' e3    !! { e3.v = logicalNot(e31.v); } !! // Logical NOT
 
-e3 <v:int> ::=
-  e4         !! e3.v = e41.v; !!
-| '+' e3    !! e3.v = e31.v; !!                       // Positive
-| '-' e3    !! e3.v = -e31.v; !!                      // Negate
-| '!' e3    !! e3.v = e31.v == 0 ? 1 : 0; !!         // Logical NOT
+e4 <v:Object> ::=
+  e5         !! { e4.v = e51.v; } !!
+| e5 '**' e4 !! { 
+    double v1 = toDouble(e51.v);
+    double v2 = toDouble(e41.v);
+    e4.v = Math.pow(v1, v2);
+  } !! // Exponentiate
 
-e4 <v:int> ::=
-  e5         !! e4.v = e51.v; !!
-| e5 '**' e4 !! e4.v = (int) Math.pow(e51.v, e41.v); !! // Exponentiate
+e5 <v:Object> ::=
+  e6         !! { e5.v = e61.v; } !!
+| ID '++'    !! { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    e5.v = v;
+    variables.put(ID1.v, increment(v));
+  } !! // Post-increment
+| ID '--'    !! { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    e5.v = v;
+    variables.put(ID1.v, decrement(v));
+  } !! // Post-decrement
 
-e5 <v:int> ::=
-e6           !! e5.v = e61.v; !!
-| ID '++'    !! e5.v = variables.get(ID1.v); variables.put(ID1.v, e5.v + 1); !! // Post-increment
-| ID '--'    !! e5.v = variables.get(ID1.v); variables.put(ID1.v, e5.v - 1); !! // Post-decrement
+e6 <v:Object> ::=
+  e7         !! { e6.v = e71.v; } !!
+| '++' ID    !! { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    Object newV = increment(v);
+    variables.put(ID1.v, newV);
+    e6.v = newV;
+  } !! // Pre-increment
+| '--' ID    !! { 
+    Object v = variables.getOrDefault(ID1.v, 0);
+    Object newV = decrement(v);
+    variables.put(ID1.v, newV);
+    e6.v = newV;
+  } !! // Pre-decrement
 
-e6 <v:int> ::=
-  e7         !! e6.v = e71.v; !!
-| '++' ID    !! int puppet = variables.get(ID1.v) + 1; variables.put(ID1.v,puppet); e6.v = puppet;  !! // Pre-increment  
-| '--' ID    !! puppet = variables.get(ID1.v) - 1; variables.put(ID1.v,puppet); e6.v = puppet ;  !! // Pre-decrement
-
-e7 <v:int> ::=
-  INTEGER    !! e7.v = INTEGER1.v; !!                       // Integer literal
-| ID         !! e7.v = variables.getOrDefault(ID1.v, 0); !! // Variable (default 0 if undefined)
-| '(' e1 ')' !! e7.v = e11.v; !!                            // Parenthesized expression
-| 'sqrt' '(' e0 ')' !! e7.v = (int) Math.sqrt(e01.v); !!            // Square root
-| 'sin' '(' e0 ')' !! e7.v = (int) (Math.sin(e01.v) * 1000); !!     // Sine (scaled)
-| 'cos' '(' e0 ')' !! e7.v = (int) (Math.cos(e01.v) * 1000); !!     // Cosine (scaled)
-| 'abs' '(' e0 ')' !! e7.v = Math.abs(e01.v); !!     // Absolute value
-| 'read' '(' ')'   !! System.out.print("Input: "); e7.v = Integer.parseInt(System.console().readLine()); !! // Read input
-| 'plugin' '(' STRING_SQ ',' e0 ')' !! e7.v = (int) plugin(STRING_SQ1.v, e01.v); !!                         // Plugin with return value
+e7 <v:Object> ::=
+  INTEGER    !! { e7.v = INTEGER1.v; } !! // Integer literal
+| REAL       !! { e7.v = REAL1.v; } !!    // Double literal
+| BOOLEAN    !! { e7.v = BOOLEAN1.v; } !! // Boolean literal
+| ID         !! { e7.v = variables.getOrDefault(ID1.v, 0); } !! // Variable (default 0 if undefined)
+| '(' e1 ')' !! { e7.v = e11.v; } !! // Parenthesized expression
+| 'sqrt' '(' e0 ')' !! { e7.v = Math.sqrt(toDouble(e01.v)); } !! // Square root
+| 'sin' '(' e0 ')' !! { e7.v = Math.sin(toDouble(e01.v)); } !! // Sine
+| 'cos' '(' e0 ')' !! { e7.v = Math.cos(toDouble(e01.v)); } !! // Cosine
+| 'abs' '(' e0 ')' !! { 
+    if (e01.v instanceof Integer) {
+      e7.v = Math.abs((Integer)e01.v);
+    } else if (e01.v instanceof Double) {
+      e7.v = Math.abs((Double)e01.v);
+    }
+  } !! // Absolute value
+| 'read' '(' ')'   !! { 
+    System.out.print("Input: "); 
+    String input = System.console().readLine();
+    try {
+      e7.v = Integer.parseInt(input);
+    } catch (NumberFormatException e) {
+      try {
+        e7.v = Double.parseDouble(input);
+      } catch (NumberFormatException ex) {
+        e7.v = input.equals("true") ? true : (input.equals("false") ? false : 0);
+      }
+    }
+  } !! // Read input
+| 'plugin' '(' STRING_SQ ',' e0 ')' !! { e7.v = plugin(STRING_SQ1.v, e01.v); } !! // Plugin with return value
 
 (* Lexical rules *)
-ID <v:String>        ::= &ID !! ID.v = lexeme(); !!  
-STRING_SQ <v:String> ::= &STRING_SQ !! STRING_SQ.v = lexemeCore().translateEscapes(); !!
-INTEGER <v:int>      ::= &INTEGER !! INTEGER.v = Integer.parseInt(lexeme()); !!
-REAL <v:double>      ::= &REAL !! REAL.v = Double.parseDouble(lexeme()); !!
+ID <v:String>        ::= &ID !! { ID.v = lexeme(); } !!  
+STRING_SQ <v:String> ::= &STRING_SQ !! { STRING_SQ.v = lexemeCore().translateEscapes(); } !!
+INTEGER <v:Object>   ::= &INTEGER !! { INTEGER.v = Integer.parseInt(lexeme()); } !!
+REAL <v:Object>      ::= &REAL !! { REAL.v = Double.parseDouble(lexeme()); } !!
+BOOLEAN <v:Object>   ::= 'true' !! { BOOLEAN.v = true; } !! | 'false' !! { BOOLEAN.v = false; } !!
 
 (* Test cases *)
-//!try "a := 0; b := 3; while a != b do b := b - 1; fin; ASSERT(a, 0);"
-//!try "plugin('init');"
+// Arithmetic Operations
+!try "a := 2 + 3; ASSERT(a, 5);"
+!try "a := 5 - 3; ASSERT(a, 2);"
+!try "a := 2 * 3; ASSERT(a, 6);"
+!try "a := 6 / 2; ASSERT(a, 3);"
+!try "a := 5 / 2; ASSERT(a, 2);"  // Integer division
+!try "a := 5 % 2; ASSERT(a, 1);"
+!try "a := 2 ** 3; ASSERT(a, 8);"
 
-//!try "a := 0; b := ++a; c := a + b; ASSERT(c, 2);"
-//!try "a := -3; b := 4; c := a + 2 * 3 >= b / 2 - 4; ASSERT(c, 1);"
-//!try "a := 2; for i := 0 ; i < 2; i := i + 1; do a := a + i; fin ; ASSERT(a, 4);"
-//!try "procedure dana { print('Welcome To My World\n'); } call dana;"
-//!try "a := 1; b := 3; if a == 0 then b := b - 1; else a := b; ASSERT(a, 3);"
-//!try "a := 1; b := 3; if a == 0 then b := b - 1; elseif a > 0 then b := b+1; else a := b; ASSERT(b,4);"
-(*
+// Comparison Operators
+!try "a := 5 > 3; ASSERT(a, true);"
+!try "a := 3 > 5; ASSERT(a, false);"
+!try "a := 3 < 5; ASSERT(a, true);"
+!try "a := 5 < 3; ASSERT(a, false);"
+!try "a := 5 >= 5; ASSERT(a, true);"
+!try "a := 4 >= 5; ASSERT(a, false);"
+!try "a := 3 <= 5; ASSERT(a, true);"
+!try "a := 5 <= 3; ASSERT(a, false);"
+!try "a := 5 == 5; ASSERT(a, true);"
+!try "a := 5 == 6; ASSERT(a, false);"
+!try "a := 5 != 6; ASSERT(a, true);"
+!try "a := 5 != 5; ASSERT(a, false);"
+
+// Logical Operators
+!try "a := true && false; ASSERT(a, false);"
+!try "a := true and true; ASSERT(a, true);"
+!try "a := false || true; ASSERT(a, true);"
+!try "a := false or false; ASSERT(a, false);"
+!try "a := true xor false; ASSERT(a, true);"
+!try "a := true xor true; ASSERT(a, false);"
+
+// Assignment Operators
+!try "a := 10; ASSERT(a, 10);"
+
+// Operation Assignment (Compound Assignments)
+!try "a := 5; a += 3; ASSERT(a, 8);"
+!try "a := 5; a -= 3; ASSERT(a, 2);"
+!try "a := 5; a *= 2; ASSERT(a, 10);"
+!try "a := 10; a /= 2; ASSERT(a, 5);"
+!try "a := 10; a %= 3; ASSERT(a, 1);"
+
+// For Loops
+!try "sum := 0; for i := 0; i < 5; i += 1; do sum := sum + i; fin; ASSERT(sum, 6);"
+!try "a := 2; for i := 0 ; i < 2; i := i + 1; do a := a + i; fin ; ASSERT(a, 4);"
+!try "product := 1; for i := 1; i <= 3; i := i + 1; do for j := 1; j <= 2; j := j + 1; do product := product * j;fin; fin; ASSERT(product, 9);"
+
+// While Loops
+!try "a := 0; b := 3; while a != b do b := b - 1; fin; ASSERT(a, 0);"
+!try "a := 0; while a < 5 do a := a + 1; fin; ASSERT(a, 5);"
+
+// If Statements
+!try "a := 5; if a > 0 then b := 1; else b := 0;  ASSERT(b, 1);"
+!try "a := -5; if a > 0 then b := 1; else b := 0;  ASSERT(b, 0);"
+
+// ElseIf Tests
+!try "a := 0; if a > 0 then b := 1; elseif a < 0 then b := -1; else b := 0; ASSERT(b, 0);"
+
+// Switch Cases
+!try "a := 2; switch(a) { case 1: b := 10; break; case 2: b := 20; break; default: b := 0; } ; ASSERT(b, 20);"
+!try "a := 1; switch(a) { case 1: b := 10; case 2: b := 20; default: b := 30; } ; ASSERT(b, 30);"
+!try "a := 5; switch(a) { case 1: b := 10; break; default: b := 0; } ; ASSERT(b, 0);"
+
 !try "a :=1; switch(a) {
-  case 0: a := a + 7; break;
-  case 1: a := a + 2; continue;
+  case 0: return a := a + 7; 
+  case 1: return a := a + 2; 
   case 2: a := a + 2; 
-  } ; ASSERT(a, 5);"
-*)
-//!try "a := 2; a += 3; ASSERT(a, 5);"
-//!try "a := 2; a -= 3; ASSERT(a, -1);"
-//!try "a := 2; a *= 3; ASSERT(a, 6);"
-//!try "a := 2; a /= 3; ASSERT(a, 0);"
+  } ; ASSERT(a, 3);"
 
+// Mixed Operations
+!try "a := 2 + 3 * 4; b := a > 10; ASSERT(b, true);"
+!try "a := 5; b := 0; c := a > 0 && b == 0; ASSERT(c, true);"
+!try "a := -3; b := 4; c := a + 2 * 3 >= b / 2 - 4; ASSERT(c, true);"
+
+// Try-Catch Blocks
+!try "try { a := 10 / 0; } catch e { b := 1; } ; ASSERT(b, 1);"
+!try "try { a /= 0; } catch e { b := 1; } ; ASSERT(b, 1);"
+
+!try "b := 999;
+c := 999;
+try {
+  a := 1;
+  b := 10 / 0;
+  c := 2;
+} catch error {
+  d := 1;
+};
+ASSERT(a, 1);
+ASSERT(b, 999);
+ASSERT(c, 999);
+ASSERT(d, 1);"
+
+!try"a := 0;
+try {
+  a := 10 / 0;
+} catch error {
+  b := 1;
+};
+ASSERT(a, 0);
+ASSERT(error, 1);
+ASSERT(b, 1);"
+!try"b := 999;
+try {
+  a := 10 / 2;
+} catch error {
+  b := 1;
+};
+ASSERT(a, 5);
+ASSERT(b, 999);"
+
+
+// Complex Scenarios
+!try "sum := 0; for i := 0; i < 3; i := i + 1; do if i % 2 == 0 then sum := sum + i; fin; ASSERT(sum, 2);"
+!try "try { a := 10 / 0; } catch e { a := 0; } ; ASSERT(a, 0);"
+!try "a := -5; b := +a; ASSERT(b, -5);"
+!try "a := !true; ASSERT(a, false);"
+!try "a := 5; b := a++; ASSERT(b, 5); ASSERT(a, 6);"
+!try "a := 5; b := ++a; ASSERT(b, 6); ASSERT(a, 6);"
+!try "a := 5; b := a--; ASSERT(b, 5); ASSERT(a, 4);"
+!try "a := 5; b := --a; ASSERT(b, 4); ASSERT(a, 4);"
+!try "a := 2.5; b := 3; c := a + b; ASSERT(c, 5.5);"
+!try "a := true; b := 1; c := a && b > 0; ASSERT(c, true);"
+!try "A := 1; a := 2; ASSERT(A, 1); ASSERT(a, 2);"
+!try "a := 0; { b := 1; a := b; } ASSERT(a, 1);"
+
+(* Function Test *)
+!try "procedure dana { print('Welcome To My World\n'); } call dana;"
+
+(* Plugin Test *)
 //!try "init; load 'GERTank.PNG'; rotate 180;"
 //!try "init; load 'mountain.jpg'; grayscale;"
 //!try "init; load 'mountain.jpg'; sobel;"
@@ -202,5 +536,3 @@ REAL <v:double>      ::= &REAL !! REAL.v = Double.parseDouble(lexeme()); !!
 //!try "init; load 'mountain.jpg'; blur 2;"
 //!try "init; load 'GERTank.PNG'; contrast 5.0; brightness 2.0;"
 //!try "plugin('init'); load 'mountain.jpg'; contrast 5.0;"
-
-!try "try { a /= 0; } catch e { b := 1; } ; ASSERT(b, 1);"
