@@ -10,7 +10,7 @@
 -assign  _n |> __bool(_)      --- assign(_X,_n),_sig -> __done,__put(_sig,_X,_n)
 -assignR _E,_sig -> _EP,_sigP --- assign(_X,_E),_sig -> assign(_X,_EP),_sigP
 
-(* Additional assign operator *)
+(* Additional assign operator *) 
 -addAssign _n |> __int32(_)    --- addAssign(_X,_n),_sig -> assign(_X, add(deref(_X),_n)),_sig
 -addAssign _n |> __real64(_)    --- addAssign(_X,_n),_sig -> assign(_X, add(deref(_X),_n)),_sig
 
@@ -18,16 +18,16 @@
 -subAssign _n |> __int32(_)    --- subAssign(_X,_n),_sig -> assign(_X, sub(deref(_X),_n)),_sig
 -subAssign _n |> __real64(_)    --- subAssign(_X,_n),_sig -> assign(_X, sub(deref(_X),_n)),_sig
 
-(* Multiplication assign operator *)
+(* Multiplication assign operator *) 
 -mulAssign _n |> __int32(_)    --- mulAssign(_X,_n),_sig -> assign(_X, mul(deref(_X),_n)),_sig
 -mulAssign _n |> __real64(_)    --- mulAssign(_X,_n),_sig -> assign(_X, mul(deref(_X),_n)),_sig
 
 (* Division assign operator *)
--divAssign _n |> __int32(_)    --- divAssign(_X,_n),_sig -> assign(_X, div(deref(_X),_n)),_sig
+-divAssign _n |> __int32(_)     --- divAssign(_X,_n),_sig -> assign(_X, div(deref(_X),_n)),_sig
 -divAssign _n |> __real64(_)    --- divAssign(_X,_n),_sig -> assign(_X, div(deref(_X),_n)),_sig
 
 (* Modulus assign operator *)
--modAssign _n |> __int32(_)    --- modAssign(_X,_n),_sig -> assign(_X, mod(deref(_X),_n)),_sig
+-modAssign _n |> __int32(_)     --- modAssign(_X,_n),_sig -> assign(_X, mod(deref(_X),_n)),_sig
 -modAssign _n |> __real64(_)    --- modAssign(_X,_n),_sig -> assign(_X, mod(deref(_X),_n)),_sig
 
 (* Sequence Operators *)
@@ -38,8 +38,9 @@
 -ifTrue                        --- if(true, _C1), _sig -> _C1, _sig
 -ifFalse                       --- if(false, _C1), _sig -> __done, _sig
 -ifResolve _E, _sig -> _EP, _sigP --- if(_E, _C1), _sig -> if(_EP, _C1), _sigP
+
 -ChangeToIfForm                   --- if(_E, _C1, elseif(_E,_C1,_C2)), _sig -> if(_E,_C1,if(_E,_C1,_C2)), _sig
--ifTrueWithElse                --- if(true, _C1, _C2), _sig -> _C1, _sig
+-ifTrueWithElse                   --- if(true, _C1, _C2), _sig -> _C1, _sig
 -ifFalseWithElse               --- if(false, _C1, _C2), _sig -> _C2, _sig
 -elseifResolve _E, _sig -> _EP, _sigP --- elseif(_E), _sig -> _EP, _sigP
 -ifResolveWithElse _E, _sig -> _EP, _sigP --- if(_E, _C1, _C2), _sig -> if(_EP, _C1, _C2), _sigP
@@ -53,6 +54,9 @@
 -switchForMultipleTrue                 --- switch(true, case(_c1,_e1, _rest)), _sig -> switch(true, _e1, switch(true, _rest)), _sig
 -switchForMultiple                     --- switch(_n, case(_c1,_e1, _rest)), _sig -> switch(eq(_n, _c1), _e1, switch(_n, _rest)), _sig
 -switchResolve _e, _sig -> _ep, _sigP  --- switch(_e, _cases), _sig -> switch(_ep, _cases), _sigP
+
+-change         ---change(_F,case(_N,_E,rest)),_sig -> if (eq(_F,_N,),_E,change(_F,rest)),_sig
+-changeresolve _E,_sig->_EP,_sigP     ---change(_E,cases),_sig -> change(_EP,cases),_sigP
 
 -while --- while(_E,_C),_sig -> if(_E,seq(_C,while(_E,_C)),__done),_sig
 
@@ -257,6 +261,7 @@ __int32 ::= &INTEGER
 __real64 ::= &REAL
 deref   ::= &ID
 __bool ::= 'true' | 'false'
+
 plugin ::= 'plugin'^ '('^ expressions^ ')'^  
 init ::= 'init'^
 load ::= 'load'^ __string
